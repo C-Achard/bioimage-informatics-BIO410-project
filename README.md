@@ -1,12 +1,6 @@
 <img src="icons/bii-banner.png" alt="image" width=auto height=40px>
 <hr>
 
-### **[Moodle BIO-410](https://moodle.epfl.ch/course/view.php?id=15721)**  <img src="icons/epfl-logo.png" width=auto height=40px alt="image" align="right">
-
-><h3 style="font-weight:500; font-size:1.6em">Project Template</h3>
->
->
-
 
 ## Plan 
 - Denoise
@@ -25,6 +19,20 @@
 - How size evolves during the division and other division events statistics (gth)
 - Keeping track of families (mother and daughters)
     - commencer avec watershed et puis merge labels qui se touchent, mais si énorme saut d'intensité pas merge (ajouter une condition)
+
+
+
+
+
+
+
+
+
+### **[Moodle BIO-410](https://moodle.epfl.ch/course/view.php?id=15721)**  <img src="icons/epfl-logo.png" width=auto height=40px alt="image" align="right">
+
+><h3 style="font-weight:500; font-size:1.6em">Project Template</h3>
+>
+>
   
 
 ## Description
