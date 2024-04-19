@@ -8,6 +8,25 @@
 >
 
 
+## Plan 
+- Denoise
+- Remove debris and bright spots by size/brightness
+- Segment bacteria and spots (replisomes) + watershed
+- Track spot trajectory (use hwD)
+
+## Results to strive for
+- Position of replisome over time (main goal)
+- Position of replisome within its cell
+    - try to monitor how it disappears and appears on the other side of the cell
+    - create some sort of polarity for each cell (using centroid/center of mass)
+    - caracteriser les tips d'intensité à la division
+    - vérifier, être sûrs qu'on ne peut pas tracker le replisome rapido
+- Division time (gth)
+- How size evolves during the division and other division events statistics (gth)
+- Keeping track of families (mother and daughters)
+    - commencer avec watershed et puis merge labels qui se touchent, mais si énorme saut d'intensité pas merge (ajouter une condition)
+  
+
 ## Description
 This repository aims at giving you the minimal structure for your java project.
 It already contains a pre-filled ``pom.xml`` file and a default package for your code.
