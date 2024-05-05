@@ -9,7 +9,9 @@ import ch.epfl.bio410.tracking.cost.DistanceAndIntensityCost;
 import ch.epfl.bio410.tracking.graph.PartitionedGraph;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -18,11 +20,11 @@ import java.io.File;
 import ch.epfl.bio410.tracking.Tracking;
 
 
-@Plugin(type = Command.class, menuPath = "Plugins>BII>Project Template")
+@Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
 
 		// Default path is 5 folders above the current folder, in DATA
-		private final static String path = "../../../../../DATA";
+		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
 
 		// Constants below are set for homework.tif, except distmax
 		private final double sigma = 5.0;  // Detection parameters, sigma of the DoG, 6 for easy.tif
@@ -31,21 +33,16 @@ public class Replisome_Analysis implements Command {
 		private final double lambda = 0.95; 	// Cost parameters DistanceAndIntensityCost
 	public void run() {
 		// resolve path
-
 		GenericDialog dlg = new GenericDialog("Replisome Analysis");
-		try {
-			Path realPath = Paths.get(path).toRealPath();
-			dlg.addDirectoryField("Image folder", realPath.toString());;
-		} catch (IOException e) {
-			IJ.log("Path " + path + " does not exist");
-			return;
-		}
-		try {
-			dlg.addChoice("Image", new File(path).list(), new File(path).list()[0]);
-		} catch (Exception e) {
+		//print
+		dlg.addDirectoryField("Path to the image", path);
+		File directory = new File(path);
+		String[] fileList = directory.list();
+		if (fileList == null || fileList.length == 0) {
+			fileList = new String[]{};
 			IJ.log("No images found in folder " + path + ", please enter the path to the image");
-			return;
 		}
+		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
 		dlg.addMessage("Detection parameters");
 		dlg.addNumericField("Sigma", sigma, 1);
 		dlg.addNumericField("Threshold", threshold, 0);
@@ -63,20 +60,28 @@ public class Replisome_Analysis implements Command {
 
 		// show the image
 		String imagePath = dlg.getNextString() + FileSystems.getDefault().getSeparator() + dlg.getNextChoice();
-		ImagePlus imp = new ImagePlus(new File(imagePath).getAbsolutePath());
+		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
+		// split the channels in DIC and GFP. DIC is used for segmentation, GFP for tracking)
+		IJ.run(imp, "Split Channels", "");
+		ImagePlus imageDIC = WindowManager.getImage("C1-" + imp.getTitle());
+		ImagePlus imageGFP = WindowManager.getImage("C2-" + imp.getTitle());
+		// show the results
+		imageDIC.show();
+		imageGFP.show();
+		IJ.run("Tile");
 		// Run tracking on the second channel of the image
 		Tracking tracker = new Tracking();
 		// Detect spots
-		PartitionedGraph frames = tracker.detect(imp, trackingSigma, trackingThreshold);
-		frames.drawSpots(imp);
-		DistanceAndIntensityCost costFunc = new DistanceAndIntensityCost(imp, trackingCostMax, trackingLambda);
+		PartitionedGraph frames = tracker.detect(imageGFP, trackingSigma, trackingThreshold);
+		frames.drawSpots(imageGFP);
+		IJ.run("Tile");
+		DistanceAndIntensityCost costFunc = new DistanceAndIntensityCost(imageGFP, trackingCostMax, trackingLambda);
 		// compute trajectories
 		PartitionedGraph trajs = null;
 		trajs = tracker.trackToNearestTrajectory(frames, costFunc);
-		trajs.drawLines(imp);
-
+		trajs.drawLines(imageGFP);
 	}
 
 
