@@ -128,7 +128,16 @@
 
 
         <!-- Add your dependencies here, following the above structure + <version></version> -->
-
+        <dependency>
+            <groupId>sc.fiji</groupId>
+            <artifactId>fiji</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>sc.fiji</groupId>
+            <artifactId>TrackMate_</artifactId>
+            <version>5.0.0</version>
+        </dependency>
 
     </dependencies>
 
