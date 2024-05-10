@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 
+import ch.epfl.bio410.tracking.TrackingConfig;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
@@ -74,7 +75,9 @@ public class Replisome_Analysis implements Command {
 		imageGFP.show();
 
 		Tracking tracker = new Tracking();
-		Model model = tracker.createTracker(imageGFP);
+		TrackingConfig config = tracker.useDefaultConfig(); // TODO : use dialog to set the parameters
+		tracker.runTracking(imageGFP);
+
 	}
 
 
