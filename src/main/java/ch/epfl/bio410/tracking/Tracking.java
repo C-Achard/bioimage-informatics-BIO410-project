@@ -8,6 +8,8 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettingsIO;
 import fiji.plugin.trackmate.tracking.jaqaman.SparseLAPTrackerFactory;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import ij.IJ;
 import ij.ImagePlus;
@@ -24,6 +26,9 @@ public class Tracking {
     public static final int TRACKER_MAX_FRAME_GAP = 4;
     public static final double TRACK_DURATION_MIN = 8.0d;
     private TrackingConfig trackingConfig;
+
+    public String trackingConfigName;
+    public String trackingConfigPath;
     /** Returns the default configuration parameters. */
     public TrackingConfig useDefaultConfig() {
         this.trackingConfig = new TrackingConfig(
@@ -39,14 +44,13 @@ public class Tracking {
     }
 
     /**
-     * Load configuration parameters from an XML file.
-     * @param path Path to the XML file.
-     * @return Config object.
-     */
-    public TrackingConfig loadConfigFromXML(String path) {
-        // get xml files from resources
-        // TODO: implement
-        return useDefaultConfig();
+    * Load configuration parameters from a properties file
+    * @param filename Name of the file to load from resources.
+    * @return TrackingConfig object with the loaded parameters.
+    */
+    public TrackingConfig loadConfig(String filename) {
+        this.trackingConfig = TrackingConfig.createFromPropertiesFile(filename);
+        return this.trackingConfig;
     }
 
     public TrackingConfig setConfig(
@@ -71,11 +75,13 @@ public class Tracking {
     }
 
     /**
-     * Creates a TrackMate tracker from the specified configuration parameters.
+     * Creates a TrackMate tracker from the specified configuration parameters, in order to track replisomes in the GFP channel.
      * @return TrackMate model object.
      */
     public Model runTracking(ImagePlus imp) {
         IJ.log("------------------ TRACKMATE ------------------");
+        this.trackingConfig.printConfig(); // show parameters
+        IJ.log("Tracking started");
         // Instantiate model object and logger
         Model model = new Model();
         model.setLogger(Logger.IJ_LOGGER);
@@ -120,7 +126,7 @@ public class Tracking {
                 true);
         settings.addTrackFilter(track_duration_filter);
 
-        // Instantiate trackmate
+        // Instantiate and run trackmate
         TrackMate trackmate = new TrackMate(model, settings);
         boolean ok = trackmate.checkInput();
         if (!ok) {
@@ -137,16 +143,16 @@ public class Tracking {
         // Display the results on top of the image
         SelectionModel selectionModel = new SelectionModel(model);
         DisplaySettings displaySettings = DisplaySettingsIO.readUserDefault();
-        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
-        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
-
+        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, "TRACK_DURATION");
+        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.SPOTS, "SPOT_QUALITY");
+//        PerTrackFeatureColorGenerator trackColor = PerTrackFeatureColorGenerator(model, "TRACK_DURATION");
         HyperStackDisplayer displayer = new HyperStackDisplayer(model, selectionModel, imp, displaySettings);
         displayer.render();
         displayer.refresh();
 
         // Echo results with the logger we set at start:
         model.getLogger().log(model.toString());
-        IJ.log("------------------ TRACKMATE RESULTS ------------------\n");
+        IJ.log("------------------ TRACKMATE FINISHED ------------------\n");
         return model;
     }
 }

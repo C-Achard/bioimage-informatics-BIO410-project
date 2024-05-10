@@ -43,7 +43,7 @@ public class Replisome_Analysis implements Command {
 		String[] fileList = directory.list();
 		if (fileList == null || fileList.length == 0) {
 			fileList = new String[]{};
-			IJ.log("No images found in folder " + path + ", please enter the path to the image");
+			IJ.log("No images found in folder " + path + ", please enter the path to the folder with images");
 		}
 		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
 		dlg.addMessage("Detection parameters");
@@ -75,8 +75,9 @@ public class Replisome_Analysis implements Command {
 		imageGFP.show();
 
 		Tracking tracker = new Tracking();
-		TrackingConfig config = tracker.useDefaultConfig(); // TODO : use dialog to set the parameters
-		tracker.runTracking(imageGFP);
+		// Note : model and config are exposed for later if needed
+		TrackingConfig config = tracker.loadConfig("Merged2_config.properties");
+		Model model = tracker.runTracking(imageGFP);
 
 	}
 
