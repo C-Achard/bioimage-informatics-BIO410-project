@@ -135,8 +135,8 @@
         </dependency>
         <dependency>
             <groupId>sc.fiji</groupId>
-            <artifactId>TrackMate_</artifactId>
-            <version>5.0.0</version>
+            <artifactId>TrackMate</artifactId>
+            <version>7.10.0</version>
         </dependency>
 
     </dependencies>

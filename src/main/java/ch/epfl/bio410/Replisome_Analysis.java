@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 
+import ch.epfl.bio410.tracking.TrackingConfig;
+import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -14,6 +16,10 @@ import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
+
+// import tracking from local package
+import ch.epfl.bio410.tracking.Tracking;
+
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
@@ -37,7 +43,7 @@ public class Replisome_Analysis implements Command {
 		String[] fileList = directory.list();
 		if (fileList == null || fileList.length == 0) {
 			fileList = new String[]{};
-			IJ.log("No images found in folder " + path + ", please enter the path to the image");
+			IJ.log("No images found in folder " + path + ", please enter the path to the folder with images");
 		}
 		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
 		dlg.addMessage("Detection parameters");
@@ -67,6 +73,12 @@ public class Replisome_Analysis implements Command {
 		// show the results
 		imageDIC.show();
 		imageGFP.show();
+
+		Tracking tracker = new Tracking();
+		// Note : model and config are exposed for later if needed
+		TrackingConfig config = tracker.loadConfig("Merged2_config.properties");
+		Model model = tracker.runTracking(imageGFP);
+
 	}
 
 
