@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 
+import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -14,6 +15,10 @@ import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
+
+// import tracking from local package
+import ch.epfl.bio410.tracking.Tracking;
+
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
@@ -67,6 +72,9 @@ public class Replisome_Analysis implements Command {
 		// show the results
 		imageDIC.show();
 		imageGFP.show();
+
+		Tracking tracker = new Tracking();
+		Model model = tracker.createTracker(imageGFP);
 	}
 
 
