@@ -8,6 +8,7 @@ import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import ch.epfl.bio410.utils.utils;
+import ch.epfl.bio410.segmentation.segmentation;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome_Analysis")
@@ -21,6 +22,7 @@ public class Replisome_Analysis implements Command {
 
 		ImagePlus imp0 = IJ.openImage("C:/Users/mathi/OneDrive/Documents/EPFL/MA4/Bioimage Analysis/Project/Project - SPB - Spot in bacteria/Bacteria/Merged-2.tif");
 		imp0.show();
+		// because I don't have enough memory
 		IJ.run("Duplicate...", "duplicate frames=1-10");
 		ImagePlus imp = IJ.getImage();
 		imp.show();
@@ -28,16 +30,19 @@ public class Replisome_Analysis implements Command {
 		//changing memory
 		//IJ.run("Memory & Threads...", "maximum=6000 parallel=8 run");
 
+		// Split channels
 		ImagePlus[] channels = ChannelSplitter.split(imp);
 		System.out.println(channels.getClass());
 		ImagePlus DIC = channels[0];
 		ImagePlus dots = channels[1];
 
 		// Removing noise
-		// call noise removal function
 		ImagePlus denoised = utils.remove_noise(DIC,sigma);
 		denoised.show();
 
+		// Segmentation
+		segmentation.segment(denoised);
+		denoised.show();
 	}
 
 
