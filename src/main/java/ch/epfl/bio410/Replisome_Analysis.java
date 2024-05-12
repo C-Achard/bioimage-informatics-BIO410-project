@@ -41,9 +41,7 @@ public class Replisome_Analysis implements Command {
 		private final int max_frame_gap = 4; // Tracking parameters, max frame gap allowed for tracking
 		private final double duration_filter = 8.0; // Tracking parameters, duration filter (min duration of a track)
 	public void run() {
-		// resolve path
 		GenericDialog dlg = new GenericDialog("Replisome Analysis");
-		//print
 		dlg.addDirectoryField("Path to the image", path);
 		File directory = new File(path);
 		String[] fileList = directory.list(new FilenameFilter() {
@@ -69,11 +67,12 @@ public class Replisome_Analysis implements Command {
 		//////// PARAMETERS (if not using existing config) ///////////
 		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
+		// detection parameters
 		dlg.addMessage("Detection parameters");
 		dlg.addNumericField("Radius (um)", radius, 2);
 		dlg.addNumericField("Quality threshold", threshold, 0);
 		dlg.addCheckbox("Median filter", median_filter);
-		// cost function params
+		// tracking parameters
 		dlg.addMessage("Tracking parameters");
 		dlg.addNumericField("Max linking distance", max_link_distance, 2);
 		dlg.addNumericField("Max gap distance", max_gap_distance, 2);
