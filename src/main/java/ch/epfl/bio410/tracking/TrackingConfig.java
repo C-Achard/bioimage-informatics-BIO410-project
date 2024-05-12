@@ -96,14 +96,18 @@ public class TrackingConfig {
             return null;
         }
     }
-    public List<String> listAvailableConfigs() {
+    public static List<String> listAvailableConfigs() {
         try {
-            String path = accessConfigPathFromResources("configs");
+            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
+            if (resourceUrl == null) {
+                return null;
+            }
+            String path = resourceUrl.getPath();
             File folder = new File(path);
             File[] listOfFiles = folder.listFiles();
             List<String> files = new ArrayList<>();
             for (File file : listOfFiles) {
-                if (file.isFile()) {
+                if (file.isFile() && file.getName().endsWith(".properties")) {
                     files.add(file.getName());
                 }
             }

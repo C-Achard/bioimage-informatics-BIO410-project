@@ -143,8 +143,12 @@ public class Tracking {
         // Display the results on top of the image
         SelectionModel selectionModel = new SelectionModel(model);
         DisplaySettings displaySettings = DisplaySettingsIO.readUserDefault();
-        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, "TRACK_DURATION");
-        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.SPOTS, "SPOT_QUALITY");
+        // Color tracks and spots by ID
+        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
+        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
+        // Use metric to color tracks
+//        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, "TRACK_DURATION");
+//        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.SPOTS, "SPOT_QUALITY");
 //        PerTrackFeatureColorGenerator trackColor = PerTrackFeatureColorGenerator(model, "TRACK_DURATION");
         HyperStackDisplayer displayer = new HyperStackDisplayer(model, selectionModel, imp, displaySettings);
         displayer.render();
