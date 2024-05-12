@@ -10,8 +10,10 @@ import ch.epfl.bio410.tracking.TrackingConfig;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.plugin.ChannelSplitter;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+
 import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
 import org.scijava.command.Command;
@@ -21,6 +23,8 @@ import java.util.List;
 
 // import tracking from local package
 import ch.epfl.bio410.tracking.Tracking;
+import ch.epfl.bio410.utils.utils;
+import ch.epfl.bio410.segmentation.segmentation;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -35,6 +39,7 @@ public class Replisome_Analysis implements Command {
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
 		private final boolean median_filter = true; // Detection parameters, median filter
+    private final double sigma = 10;  // Detection parameters, sigma of the DoG
 
 		private final double max_link_distance = 1.0; // Tracking parameters, max linking distance between objects
 		private final double max_gap_distance = 1.0; // Tracking parameters, max gap distance to close a track across frames
@@ -96,6 +101,8 @@ public class Replisome_Analysis implements Command {
 
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
+    //pour mathilde 
+    //String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
@@ -106,6 +113,15 @@ public class Replisome_Analysis implements Command {
 		// show the results
 		imageDIC.show();
 		imageGFP.show();
+    
+		// Removing noise
+		ImagePlus denoised = utils.remove_noise(imageDIC,sigma);
+		denoised.show();
+
+		// Segmentation
+		segmentation.segment(denoised);
+		denoised.show();
+    
 
 		Tracking tracker = new Tracking();
 		// Note : model and config are exposed for later if needed

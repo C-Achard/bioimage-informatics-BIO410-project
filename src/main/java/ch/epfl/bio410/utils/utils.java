@@ -3,8 +3,12 @@ package ch.epfl.bio410.utils;
 import ij.ImagePlus;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
-import ij.process.ImageProcessor;
 import ij.IJ;
+
+/**
+ * This class implements utils functions
+ */
+
 
 public class utils {
 
@@ -30,7 +34,7 @@ public class utils {
      *
      * @param imp contains the pixel data of the image and some basic methods to manipulate it.
      * @param sigma is the standard deviation of the gaussian we want to apply to the image to blur it
-     * @return the processed image as an ImageProcessor
+     * @return the processed image as an ImagePlus
      */
     public static ImagePlus dog(ImagePlus imp, double sigma) {
         ImagePlus g1 = imp.duplicate(); // Duplicate the input image
