@@ -44,3 +44,4 @@ gradle.properties
 ### Loose files ###
 *.tif
 *.pdf
+*.csv
