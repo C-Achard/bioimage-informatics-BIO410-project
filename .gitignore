@@ -45,3 +45,4 @@ gradle.properties
 *.tif
 *.pdf
 *.csv
+!DATA/results/*.csv
