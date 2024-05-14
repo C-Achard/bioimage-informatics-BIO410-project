@@ -31,7 +31,7 @@ public class Replisome_Analysis implements Command {
 
 		// Default path is 5 folders above the current folder, in DATA
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
-
+//		private String path = utils.getFolderPathInResources("DATA"); does not work, as it means including several Gbs of data in the jar
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
 		private final boolean medianFilter = true; // Detection parameters, median filter
@@ -147,8 +147,18 @@ public class Replisome_Analysis implements Command {
 
 		// Save the results to CSV
 		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
-		String spotsCSVName = "spots_" + imageNameWithoutExtension + ".csv";
-		String tracksCSVName = "tracks_" + imageNameWithoutExtension + ".csv";
+		// create "results" folder if it doesn't exist
+		File resultsFolder = Paths.get(path, "results").toFile();
+		if (!resultsFolder.exists()) {
+			if (resultsFolder.mkdir()) {
+				IJ.log("Directory is created!");
+			} else {
+				IJ.log("Failed to create directory!");
+				throw new RuntimeException("Failed to create results directory. Aborting.");
+			}
+		}
+		String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+		String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
 		File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
 		File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
         try {
