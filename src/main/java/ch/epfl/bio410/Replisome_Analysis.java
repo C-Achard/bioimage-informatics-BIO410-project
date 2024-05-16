@@ -1,20 +1,17 @@
 package ch.epfl.bio410;
 
 import java.io.FilenameFilter;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 
 import ch.epfl.bio410.tracking.TrackingConfig;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.plugin.ChannelSplitter;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 
-import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -34,17 +31,16 @@ public class Replisome_Analysis implements Command {
 
 		// Default path is 5 folders above the current folder, in DATA
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
-
-		// Constants below are set for homework.tif, except distmax
+//		private String path = utils.getFolderPathInResources("DATA"); does not work, as it means including several Gbs of data in the jar
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
-		private final boolean median_filter = true; // Detection parameters, median filter
-    private final double sigma = 10;  // Detection parameters, sigma of the DoG
+		private final boolean medianFilter = true; // Detection parameters, median filter
+    	private final double sigma = 10;  // Detection parameters, sigma of the DoG
 
-		private final double max_link_distance = 1.0; // Tracking parameters, max linking distance between objects
-		private final double max_gap_distance = 1.0; // Tracking parameters, max gap distance to close a track across frames
-		private final int max_frame_gap = 4; // Tracking parameters, max frame gap allowed for tracking
-		private final double duration_filter = 8.0; // Tracking parameters, duration filter (min duration of a track)
+		private final double maxLinkDistance = 1.0; // Tracking parameters, max linking distance between objects
+		private final double maxGapDistance = 1.0; // Tracking parameters, max gap distance to close a track across frames
+		private final int maxFrameGap = 4; // Tracking parameters, max frame gap allowed for tracking
+		private final double durationFilter = 8.0; // Tracking parameters, duration filter (min duration of a track)
 	public void run() {
 		GenericDialog dlg = new GenericDialog("Replisome Analysis");
 		dlg.addDirectoryField("Path to the image", path);
@@ -64,11 +60,11 @@ public class Replisome_Analysis implements Command {
 		dlg.addMessage("Use existing config, or set new parameters :");
 		dlg.addCheckbox("Use existing config", true);
 		// add config choices
-		List<String> config_list = TrackingConfig.listAvailableConfigs();
-		if (config_list.size() == 0) {
+		List<String> configList = TrackingConfig.listAvailableConfigs();
+		if (configList.size() == 0) {
 			IJ.log("No config files found in folder " + path + ", please set the parameters");
 		}
-		dlg.addChoice("Config", config_list.toArray(new String[0]), config_list.size() > 0 ? config_list.get(0) : "");
+		dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
 		//////// PARAMETERS (if not using existing config) ///////////
 		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
@@ -76,28 +72,28 @@ public class Replisome_Analysis implements Command {
 		dlg.addMessage("Detection parameters");
 		dlg.addNumericField("Radius (um)", radius, 2);
 		dlg.addNumericField("Quality threshold", threshold, 0);
-		dlg.addCheckbox("Median filter", median_filter);
+		dlg.addCheckbox("Median filter", medianFilter);
 		// tracking parameters
 		dlg.addMessage("Tracking parameters");
-		dlg.addNumericField("Max linking distance", max_link_distance, 2);
-		dlg.addNumericField("Max gap distance", max_gap_distance, 2);
-		dlg.addNumericField("Max frame gap", max_frame_gap, 0);
-		dlg.addNumericField("Duration filter", duration_filter, 2);
+		dlg.addNumericField("Max linking distance", maxLinkDistance, 2);
+		dlg.addNumericField("Max gap distance", maxGapDistance, 2);
+		dlg.addNumericField("Max frame gap", maxFrameGap, 0);
+		dlg.addNumericField("Duration filter", durationFilter, 2);
 		dlg.showDialog();
 		if (dlg.wasCanceled()) return;
 
 		// Get all the parameters
 		String path = dlg.getNextString();
 		String image = dlg.getNextChoice();
-		boolean use_existing_config = dlg.getNextBoolean();
+		boolean useExistingConfig = dlg.getNextBoolean();
 		String config_name = dlg.getNextChoice();
 		double radius = dlg.getNextNumber();
 		double threshold = dlg.getNextNumber();
-		boolean median_filter = dlg.getNextBoolean();
-		double max_link_distance = dlg.getNextNumber();
-		double max_gap_distance = dlg.getNextNumber();
-		int max_frame_gap = (int) dlg.getNextNumber();
-		double duration_filter = dlg.getNextNumber();
+		boolean medianFilter = dlg.getNextBoolean();
+		double maxLinkDistance = dlg.getNextNumber();
+		double maxGapDistance = dlg.getNextNumber();
+		int maxFrameGap = (int) dlg.getNextNumber();
+		double durationFilter = dlg.getNextNumber();
 
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
@@ -113,36 +109,65 @@ public class Replisome_Analysis implements Command {
 		// show the results
 		imageDIC.show();
 		imageGFP.show();
+		// Tile
+		IJ.run("Tile");
     
 		// Removing noise
+		IJ.log("Removing noise in DIC channel");
 		ImagePlus denoised = utils.remove_noise(imageDIC,sigma);
 		denoised.show();
 
 		// Segmentation
+		IJ.log("Segmentation of DIC channel");
 		segmentation.segment(denoised);
 		denoised.show();
-    
+
+		IJ.run("Tile");
 
 		Tracking tracker = new Tracking();
 		// Note : model and config are exposed for later if needed
-		if (!use_existing_config) {
+		if (!useExistingConfig) {
 			TrackingConfig config = tracker.setConfig(
 					radius,
 					threshold,
-					median_filter,
-					max_link_distance,
-					max_gap_distance,
-					max_frame_gap,
-					duration_filter
+					medianFilter,
+					maxLinkDistance,
+					maxGapDistance,
+					maxFrameGap,
+					durationFilter
 			);
 		}
 		// load the config if it exists
-		if (use_existing_config && config_name != null) {
+		if (useExistingConfig && config_name != null) {
 			TrackingConfig config = tracker.loadConfig(config_name);
 		}
 		Model model = tracker.runTracking(imageGFP);
+		FeatureModel featureModel = model.getFeatureModel();
+		// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
 
-	}
+		// Save the results to CSV
+		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
+		// create "results" folder if it doesn't exist
+		File resultsFolder = Paths.get(path, "results").toFile();
+		if (!resultsFolder.exists()) {
+			if (resultsFolder.mkdir()) {
+				IJ.log("Directory is created!");
+			} else {
+				IJ.log("Failed to create directory!");
+				throw new RuntimeException("Failed to create results directory. Aborting.");
+			}
+		}
+		String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+		String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
+		File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+		File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+        try {
+            tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
 
 	/**

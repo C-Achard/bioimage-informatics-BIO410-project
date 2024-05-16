@@ -5,12 +5,20 @@ import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
 
+import java.net.URL;
+import java.nio.file.Paths;
+
 /**
  * This class implements utils functions
  */
 
 
 public class utils {
+
+    public static String getFolderPathInResources(String folderName) {
+        URL resourceURL = utils.class.getClassLoader().getResource(folderName);
+        return Paths.get(resourceURL.getPath()).toString();
+    }
 
     public static ImagePlus remove_noise(ImagePlus imp, double sigma) {
         //imp.show();

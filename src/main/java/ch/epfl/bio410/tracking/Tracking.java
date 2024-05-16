@@ -8,12 +8,13 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettingsIO;
 import fiji.plugin.trackmate.tracking.jaqaman.SparseLAPTrackerFactory;
-import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
-import fiji.plugin.trackmate.visualization.TrackColorGenerator;
+import fiji.plugin.trackmate.visualization.table.AllSpotsTableView;
+import fiji.plugin.trackmate.visualization.table.TrackTableView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import ij.IJ;
 import ij.ImagePlus;
-
+import java.io.File;
+import java.io.IOException;
 
 
 public class Tracking {
@@ -26,6 +27,7 @@ public class Tracking {
     public static final int TRACKER_MAX_FRAME_GAP = 4;
     public static final double TRACK_DURATION_MIN = 8.0d;
     private TrackingConfig trackingConfig;
+    private DisplaySettings displaySettings;
 
     public String trackingConfigName;
     public String trackingConfigPath;
@@ -53,6 +55,17 @@ public class Tracking {
         return this.trackingConfig;
     }
 
+    /**
+     * Set the configuration parameters for tracking.
+     * @param detector_radius Radius of the object in um
+     * @param detector_threshold Quality threshold
+     * @param detector_median_filter Median filter
+     * @param tracker_linking_max_distance Max linking distance between objects
+     * @param tracker_gap_closing_max_distance Max gap distance to close a track across frames
+     * @param tracker_max_frame_gap Max frame gap allowed for tracking
+     * @param track_duration_min Duration filter (min duration of a track)
+     * @return
+     */
     public TrackingConfig setConfig(
             double detector_radius,
             double detector_threshold,
@@ -143,6 +156,7 @@ public class Tracking {
         // Display the results on top of the image
         SelectionModel selectionModel = new SelectionModel(model);
         DisplaySettings displaySettings = DisplaySettingsIO.readUserDefault();
+        this.displaySettings = displaySettings;
         // Color tracks and spots by ID
         displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
         displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
@@ -158,5 +172,25 @@ public class Tracking {
         model.getLogger().log(model.toString());
         IJ.log("------------------ TRACKMATE FINISHED ------------------\n");
         return model;
+    }
+    public void saveFeaturesToCSV(Model model, File csvFileSpots, File csvFileTracks) throws IOException {
+        // Create a selection model for the TrackMate model
+        SelectionModel sm = new SelectionModel(model);
+        DisplaySettings ds = this.displaySettings;
+        // if display settings are not set, throw exception as tracking must be run first
+        if (ds == null) {
+            throw new IOException("Display settings not set. Please run tracking first.");
+        }
+
+        // Create tables for tracks
+        TrackTableView trackTableView = new TrackTableView(model, sm, ds);
+
+        // Export the tables to CSV files
+        trackTableView.getSpotTable().exportToCsv(csvFileSpots);
+        trackTableView.getTrackTable().exportToCsv(csvFileTracks);
+
+        // Save all spots table (includes all spots, even those not in tracks)
+        // AllSpotsTableView spotsTableView = AllSpotsTableView(model, sm, ds);
+        // spotsTableView.exportToCsv(csvFileAllSpots.getAbsolutePath());
     }
 }
