@@ -11,7 +11,7 @@ public class segmentation {
 
     public static void segment(ImagePlus imp) {
         // Otsu, Default and IsoData work well
-        IJ.run(imp, "Convert to Mask", "method=Otsu background=Dark calculate black");
+        IJ.run(imp, "Convert to Mask", "method=Otsu background=Light calculate black");
     }
 
 }
