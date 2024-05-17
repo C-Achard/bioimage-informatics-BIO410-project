@@ -138,6 +138,11 @@
             <artifactId>TrackMate</artifactId>
             <version>7.10.0</version>
         </dependency>
+        <dependency>
+            <groupId>ch.epfl.biop</groupId>
+            <artifactId>LaRoMe</artifactId>
+            <version>0.3.2</version>
+        </dependency>
 
     </dependencies>
 
