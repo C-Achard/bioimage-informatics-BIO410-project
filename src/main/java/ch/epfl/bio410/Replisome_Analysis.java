@@ -100,9 +100,9 @@ public class Replisome_Analysis implements Command {
 		double duration_filter = dlg.getNextNumber();
 
 		// show the image
-		String imagePath = Paths.get(path, image).toString();
-    //pour mathilde 
-    //String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
+		//String imagePath = Paths.get(path, image).toString();
+    	//pour mathilde
+    	String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-2.tif";
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
