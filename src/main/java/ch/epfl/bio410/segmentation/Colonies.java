@@ -135,8 +135,8 @@ private ImagePlus getColonyFromDiagram() {
             ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
 
             // Process the slice
-//            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
-            ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
+            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
+//            ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
             processedStack.addSlice(destinationImagePlus.getProcessor());
 
             // Compute the Voronoi diagram for the first frame only
