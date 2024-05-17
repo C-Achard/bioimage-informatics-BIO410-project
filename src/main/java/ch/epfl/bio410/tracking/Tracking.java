@@ -29,8 +29,8 @@ public class Tracking {
     private TrackingConfig trackingConfig;
     private DisplaySettings displaySettings;
 
-    public String trackingConfigName;
-    public String trackingConfigPath;
+    public String trackingConfigName; // used to save the config file (if needed)
+    public String trackingConfigPath; // used to save the config file (if needed)
     /** Returns the default configuration parameters. */
     public TrackingConfig useDefaultConfig() {
         this.trackingConfig = new TrackingConfig(
@@ -64,7 +64,7 @@ public class Tracking {
      * @param tracker_gap_closing_max_distance Max gap distance to close a track across frames
      * @param tracker_max_frame_gap Max frame gap allowed for tracking
      * @param track_duration_min Duration filter (min duration of a track)
-     * @return
+     * @return The TrackingConfig object with the set parameters.
      */
     public TrackingConfig setConfig(
             double detector_radius,
@@ -153,17 +153,19 @@ public class Tracking {
             return null;
         }
 
-        // Display the results on top of the image
+        // Init components needed to display results
         SelectionModel selectionModel = new SelectionModel(model);
         DisplaySettings displaySettings = DisplaySettingsIO.readUserDefault();
         this.displaySettings = displaySettings;
         // Color tracks and spots by ID
         displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
         displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.TRACKS, TrackIndexAnalyzer.TRACK_INDEX);
-        // Use metric to color tracks
+        // Code to use a metric to color tracks
 //        displaySettings.setTrackColorBy(DisplaySettings.TrackMateObject.TRACKS, "TRACK_DURATION");
 //        displaySettings.setSpotColorBy(DisplaySettings.TrackMateObject.SPOTS, "SPOT_QUALITY");
 //        PerTrackFeatureColorGenerator trackColor = PerTrackFeatureColorGenerator(model, "TRACK_DURATION");
+
+        // Display the results
         HyperStackDisplayer displayer = new HyperStackDisplayer(model, selectionModel, imp, displaySettings);
         displayer.render();
         displayer.refresh();
@@ -173,6 +175,13 @@ public class Tracking {
         IJ.log("------------------ TRACKMATE FINISHED ------------------\n");
         return model;
     }
+    /**
+     * Save the features of the spots and tracks to CSV files.
+     * @param model The TrackMate model used for tracking
+     * @param csvFileSpots The file to save the spots features to
+     * @param csvFileTracks The file to save the tracks features to
+     * @throws IOException If display settings are not set
+     */
     public void saveFeaturesToCSV(Model model, File csvFileSpots, File csvFileTracks) throws IOException {
         // Create a selection model for the TrackMate model
         SelectionModel sm = new SelectionModel(model);
