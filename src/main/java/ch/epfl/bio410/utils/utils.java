@@ -1,12 +1,9 @@
 package ch.epfl.bio410.utils;
 
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.plugin.LutLoader;
 
