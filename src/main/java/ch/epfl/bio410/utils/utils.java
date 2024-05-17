@@ -9,7 +9,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.plugin.LutLoader;
-import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.awt.*;
 import java.awt.image.IndexColorModel;

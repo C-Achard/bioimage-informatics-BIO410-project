@@ -10,8 +10,6 @@ import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
 
 import java.util.HashMap;
 import java.util.HashSet;
