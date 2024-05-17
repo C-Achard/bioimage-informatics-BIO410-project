@@ -33,67 +33,62 @@ public class Colonies {
         this.clij2 = CLIJ2.getInstance();
         this.imageDIC = imageDIC;
     }
-private void getColonyFromDiagram() {
+private ImagePlus getColonyFromDiagram() {
     // In python, this would be :
+    // result = np.zeros_like(bacteriaLabelsNoColonies)
     // for i in range(imageDIC.shape[0]):
     //     for label in np.unique(bacteriaLabelsNoColonies[i]):
     //        mask = np.where(bacteriaLabelsNoColonies[i] == label, 1, 0)
-    //        voronoi_regions = np.unique(np.where(mask != 0, voronoiDiagram, 0))
+    //        voronoi_regions = np.unique(np.where(mask != 0, voronoiDiagram, 0), return_counts=True)
+    //        colony_label = voronoi_regions[0][np.argmax(voronoi_regions[1])]
+    //        result[i] += np.where(bacteriaLabelsNoColonies[i] == label, colony_label, result[i])
     IJ.log("Assigning colonies to bacteria");
-    ImageStack resultColonyLabels = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
-    for (int i = 1; i <= this.imageDIC.getStackSize(); i++) {
-        IJ.log("Processing frame " + i + "/" + this.imageDIC.getStackSize());
-        // Create an ImageProcessor to hold the colony labels
-        ImageProcessor sliceColonyLabels = new ByteProcessor(this.imageDIC.getWidth(), this.imageDIC.getHeight());
-        // Get bacteria labels stack for the current frame
-        ImageProcessor bacteriaLabelsStack = bacteriaLabelsNoColonies.getStack().getProcessor(i);
-        // Get voronoi diagram
-        ImageProcessor voronoi = voronoiDiagram.getStack().getProcessor(1);
-        Set<Float> uniqueLabels = new HashSet<>();
-        for (int j = 0; j < voronoi.getPixelCount(); j++) {
-            float value = voronoi.getf(j);
-            if (value != 0) {
-                uniqueLabels.add(value);
-            }
+    // Create a new ImageStack to hold the result
+    ImageStack result = new ImageStack(bacteriaLabelsNoColonies.getWidth(), bacteriaLabelsNoColonies.getHeight());
+
+// Loop over each slice in the stack
+    for (int i = 1; i <= imageDIC.getStackSize(); i++) {
+        IJ.log("Processing frame " + i + "/" + imageDIC.getStackSize());
+        // Get the bacteria labels for the current frame
+        ImageProcessor bacteriaLabels = bacteriaLabelsNoColonies.getStack().getProcessor(i);
+
+        // Create a new ImageProcessor to hold the result for the current frame
+        ImageProcessor resultFrame = new ByteProcessor(bacteriaLabelsNoColonies.getWidth(), bacteriaLabelsNoColonies.getHeight());
+
+        // Loop over each unique label in the bacteria labels
+        for (int label : getUniqueValues(bacteriaLabels)) {
+            // Create a binary mask where the pixels with the current label are set to 1 and all other pixels are set to 0
+            ImageProcessor mask = createBinaryMask(bacteriaLabels, label);
+
+            // Get the unique values in the Voronoi diagram that overlap with the mask, along with their counts
+            Map<Integer, Integer> voronoiRegions = getUniqueValuesWithCounts(voronoiDiagram.getProcessor(), mask);
+
+            // Find the label with the maximum count
+            int colonyLabel = getMaxCountLabel(voronoiRegions);
+
+            // Add the colony label to the result for the current frame
+            addLabelToResult(bacteriaLabels, resultFrame, label, colonyLabel);
         }
 
-        for (Float label : uniqueLabels) {
-            // Get all regions in the voronoi diagram that overlap with the current label
-            ImageProcessor mask = bacteriaLabelsStack.duplicate();
-            mask.setThreshold(label, label, ImageProcessor.NO_LUT_UPDATE);
-            ImageProcessor binaryMask = mask.createMask();
-            ImageProcessor regions = voronoi.duplicate();
-            regions.copyBits(binaryMask, 0, 0, Blitter.MULTIPLY);
-            Map<Float, Integer> counts = new HashMap<>();
-            for (int j = 0; j < regions.getPixelCount(); j++) {
-                float value = regions.getf(j);
-                if (value != 0) {  // Ignore zero values
-                    counts.put(value, counts.getOrDefault(value, 0) + 1);
-                }
-            }
-
-            // Find the value with the maximum count
-            float maxValue = 0;
-            int maxCount = 0;
-            for (Map.Entry<Float, Integer> entry : counts.entrySet()) {
-                if (entry.getValue() > maxCount) {
-                    maxValue = entry.getKey();
-                    maxCount = entry.getValue();
-                }
-            }
-
-            // Assign the colony label to the bacteria
-            ImageProcessor colonyLabel = bacteriaLabelsStack.duplicate();
-            colonyLabel.setThreshold(maxValue, maxValue, ImageProcessor.NO_LUT_UPDATE);
-            ImageProcessor binaryColonyLabel = colonyLabel.createMask();
-            // Add to sliceColonyLabels
-            sliceColonyLabels.copyBits(binaryColonyLabel, 0, 0, Blitter.ADD);
-        }
-        resultColonyLabels.addSlice(sliceColonyLabels);
+        // Add the result for the current frame to the result stack
+        result.addSlice(resultFrame);
     }
-    // Convert resultColonyLabels to ImagePlus
-    this.colonyLabels = new ImagePlus("Colony labels", resultColonyLabels);
+    return new ImagePlus("Colony labels", result);
 }
+
+    private ImagePlus voronoiOtsuLabeling(ImagePlus slice) {
+        ClearCLBuffer input = clij2.push(slice);
+        ClearCLBuffer destination = clij2.create(input);
+        clij2.voronoiOtsuLabeling(input, destination, 5.0f, 1.0f);
+
+        // Pull the result and add it to the processed stack
+        ImagePlus destinationImagePlus = clij2.pull(destination);
+
+        // Cleanup memory on GPU
+        clij2.release(input);
+        clij2.release(destination);
+        return destinationImagePlus;
+    }
 
     private ImagePlus connectedComponentsLabeling(ImagePlus slice) {
         ClearCLBuffer input = clij2.push(slice);
@@ -140,7 +135,8 @@ private void getColonyFromDiagram() {
             ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
 
             // Process the slice
-            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
+//            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
+            ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
             processedStack.addSlice(destinationImagePlus.getProcessor());
 
             // Compute the Voronoi diagram for the first frame only
@@ -170,8 +166,73 @@ private void getColonyFromDiagram() {
 //        this.voronoiDiagram = voronoiDiagram;
 
         // Assign colonies
-//        getColonyFromDiagram();
-//        this.colonyLabels.show();
+        this.colonyLabels = getColonyFromDiagram();
+        this.colonyLabels.setLut(this.glasbeyLUT);
+        this.colonyLabels.show();
+    }
+    private Set<Integer> getUniqueValues(ImageProcessor image) {
+        // This method returns a Set of the unique values in the given ImageProcessor
+        Set<Integer> uniqueValues = new HashSet<>();
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int value = image.get(x, y);
+                if (value != 0) {
+                    uniqueValues.add(value);
+                }
+            }
+        }
+        return uniqueValues;
+    }
+
+    private ImageProcessor createBinaryMask(ImageProcessor image, float value) {
+        // This method returns a binary ImageProcessor where the pixels with the given value are set to 1 and all other pixels are set to 0
+        ImageProcessor mask = new ByteProcessor(image.getWidth(), image.getHeight());
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                if (image.getf(x, y) == value) {
+                    mask.set(x, y, 1);
+                }
+            }
+        }
+        return mask;
+    }
+
+    private Map<Integer, Integer> getUniqueValuesWithCounts(ImageProcessor image, ImageProcessor mask) {
+        // This method returns a Map where the keys are the unique values in the given ImageProcessor that overlap with the mask, and the values are their counts
+        Map<Integer, Integer> counts = new HashMap<>();
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                if (mask.get(x, y) == 1) {
+                    int value = image.get(x, y);
+                    counts.put(value, counts.getOrDefault(value, 0) + 1);
+                }
+            }
+        }
+        return counts;
+    }
+
+    private int getMaxCountLabel(Map<Integer, Integer> counts) {
+        // This method returns the key with the maximum value in the given Map
+        int maxLabel = 0;
+        int maxCount = 0;
+        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() > maxCount) {
+                maxLabel = entry.getKey();
+                maxCount = entry.getValue();
+            }
+        }
+        return maxLabel;
+    }
+
+    private void addLabelToResult(ImageProcessor source, ImageProcessor destination, int sourceLabel, int destinationLabel) {
+        // This method adds the destination label to the destination ImageProcessor at the positions where the source ImageProcessor has the source label
+        for (int y = 0; y < source.getHeight(); y++) {
+            for (int x = 0; x < source.getWidth(); x++) {
+                if (source.getf(x, y) == sourceLabel) {
+                    destination.set(x, y, destinationLabel);
+                }
+            }
+        }
     }
 
 }
