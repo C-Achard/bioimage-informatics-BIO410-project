@@ -3,16 +3,15 @@ package ch.epfl.bio410.segmentation;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class Colonies {
@@ -21,7 +20,7 @@ public class Colonies {
      * Then, we expand these labels in the first frame with a Voronoi diagram to obtain a "region" for each colony.
      * Finally, over each frame, we assign a given group of bacteria to a colony if they are mainly in the same region of the Voronoi diagram.
      */
-    public ImagePlus imageDIC; // holds the original DIC image
+    private ImagePlus imageDIC; // holds the original DIC image
     public ImagePlus bacteriaLabelsNoColonies; // contains the instance labels, with disjoint values between frames
     public ImagePlus voronoiDiagram; // contains the Voronoi diagram of the first frame, used to define the colony regions
     public ImagePlus colonyLabels; // contains the colony labels, with consistent values between frames
@@ -32,11 +31,89 @@ public class Colonies {
         this.clij2 = CLIJ2.getInstance();
         this.imageDIC = imageDIC;
     }
+
+    /**
+     * This method finds colony in a thresholded DIC channel.
+     * To do so, we first use connected components to label each colony.
+     * Then, the Voronoi diagram of these labels in the first frame is used to assign each label in other frames to a
+     * region in the diagram, resulting in rough "colonies" labels.
+     * Labels are filtered by size to avoid keeping large/small labels
+     * @param areaFilterLowPercentile The lower percentile of label area allowed (labels below this area threshold will be removed)
+     * @param areaFilterHighPercentile The upper percentile of label area allowed
+     */
+    public void runColoniesComputation(double areaFilterLowPercentile, double areaFilterHighPercentile) {
+        // Create a stack to hold the processed frames
+        ImageStack processedStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
+        // Below is if we want to get diagram for all frames
+        // ImageStack regionDiagramStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
+        IJ.log("Computing labels for bacteria");
+        IJ.log("Processing " + this.imageDIC.getStackSize() + " frames");
+        // Loop through each slice in the stack
+        for (int i = 1; i <= this.imageDIC.getStackSize(); i++) {
+            // Extract and copy the slice using substack
+            ImageProcessor frame = this.imageDIC.getStack().getProcessor(i);
+            ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
+
+            // Process the slice
+            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
+            // ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
+
+
+            // FIXME : the filtering is per-frame, meaning it might not always remove labels consistently
+            IJ.log("Filtering frame " + i + "/" + this.imageDIC.getStackSize());
+            ImageProcessor filteredImage = filterLabelsByPixelCount(
+                    destinationImagePlus.getProcessor(),
+                    areaFilterLowPercentile,
+                    areaFilterHighPercentile,
+                    true,
+                    false
+            );
+            destinationImagePlus = new ImagePlus("Filtered", filteredImage);
+
+            processedStack.addSlice(destinationImagePlus.getProcessor());
+
+            // Compute the Voronoi diagram for the first frame only
+            // Assumptions :
+            // - The bacteria are initially not too close to each other
+            // - The bacteria do not move too much over all frames
+            if (i == 1) {
+                this.voronoiDiagram = voronoiDiagram(destinationImagePlus);
+                // regionDiagramStack.addSlice(voronoiImagePlus.getProcessor());
+            }
+
+            // Delete slice
+            slice.close();
+            destinationImagePlus.close();
+            IJ.log("Finished labeling frame " + i + "/" + this.imageDIC.getStackSize());
+            //////////////
+            // only first ten frames (for testing)
+    //        if (i == 10) {
+    //            break;
+    //        }
+        }
+
+    // Create a new ImagePlus from the processed stack
+    this.bacteriaLabelsNoColonies  = new ImagePlus("Bacteria labels", processedStack);
+
+    // Set Glasbey LUT
+    this.bacteriaLabelsNoColonies.setLut(this.glasbeyLUT);
+    this.voronoiDiagram.setLut(this.glasbeyLUT);
+
+    // Show the result
+    this.bacteriaLabelsNoColonies.show();
+    this.voronoiDiagram.show();
+
+    // Assign colonies
+    this.colonyLabels = getColonyFromDiagram();
+    this.colonyLabels.setLut(this.glasbeyLUT);
+    this.colonyLabels.show();
+    }
 private ImagePlus getColonyFromDiagram() {
-    // In python, this would be :
+    // This is emulating the following python (pseudo)code (but poorly optimized ):
     // result = np.zeros_like(bacteriaLabelsNoColonies)
-    // for i in range(imageDIC.shape[0]):
-    //     for label in np.unique(bacteriaLabelsNoColonies[i]):
+    // voronoi_diagram is from the first frame
+    // for i in range(imageDIC.shape[0]): # iterate over time
+    //     for label in np.unique(bacteriaLabelsNoColonies[i]): # iterate over unique labels in frame
     //        mask = np.where(bacteriaLabelsNoColonies[i] == label, 1, 0)
     //        voronoi_regions = np.unique(np.where(mask != 0, voronoiDiagram, 0), return_counts=True)
     //        colony_label = voronoi_regions[0][np.argmax(voronoi_regions[1])]
@@ -57,14 +134,11 @@ private ImagePlus getColonyFromDiagram() {
         // Loop over each unique label in the bacteria labels
         for (int label : getUniqueValues(bacteriaLabels)) {
             // Create a binary mask where the pixels with the current label are set to 1 and all other pixels are set to 0
-             ImageProcessor mask = createBinaryMask(bacteriaLabels, label);
-//            ImageProcessor mask = new ByteProcessor(bacteriaLabels.getWidth(), bacteriaLabels.getHeight());
-//            addLabelToResultAndCreateBinaryMask(bacteriaLabels, mask, label, 1);
+            ImageProcessor mask = createBinaryMask(bacteriaLabels, label);
 
             // Get the unique values in the Voronoi diagram that overlap with the mask, along with their counts
-//            Map<Integer, Integer> voronoiRegions = getUniqueValuesWithCounts(voronoiDiagram.getProcessor(), mask);
             int[] voronoiRegions = getUniqueValuesWithCounts(voronoiDiagram.getProcessor(), mask);
-            IJ.log("Voronoi regions : " + Arrays.toString(voronoiRegions));
+//          IJ.log("Voronoi regions : " + Arrays.toString(voronoiRegions));
             // Find the label with the maximum count
             int colonyLabel = getMaxCountLabel(voronoiRegions);
 
@@ -72,7 +146,6 @@ private ImagePlus getColonyFromDiagram() {
             addLabelToResult(bacteriaLabels, resultFrame, label, colonyLabel);
             IJ.log("Frame " + i + " - Label " + label + " assigned to colony " + colonyLabel);
         }
-
         // Add the result for the current frame to the result stack
         result.addSlice(resultFrame);
     }
@@ -114,6 +187,7 @@ private ImagePlus voronoiDiagram(ImagePlus slice) {
 
     // Pull the result and add it to the processed stack
     ImagePlus destinationImagePlus = clij2.pull(destination);
+    destinationImagePlus.setTitle("Voronoi Diagram");
 
     // Cleanup memory on GPU
     clij2.release(input);
@@ -121,75 +195,11 @@ private ImagePlus voronoiDiagram(ImagePlus slice) {
     return destinationImagePlus;
 }
 
-/**
- * This method performs Voronoi-Otsu labeling on the DIC image stack.
- * @return The processed image stack. Colonies are labeled with a unique color, inconsistent between frames.
- */
-public void runColoniesComputation() {
-    // Create a stack to hold the processed frames
-    ImageStack processedStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
-    //        ImageStack regionDiagramStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
-    IJ.log("Computing labels for bacteria");
-    IJ.log("Processing " + this.imageDIC.getStackSize() + " frames");
-    // Loop through each slice in the stack
-    for (int i = 1; i <= this.imageDIC.getStackSize(); i++) {
-        // Extract and copy the slice using substack
-        ImageProcessor frame = this.imageDIC.getStack().getProcessor(i);
-        ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
-
-        // Process the slice
-        ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
-        // ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
-
-        // TODO : add filtering based on area
-        IJ.log("Filtering frame " + i + "/" + this.imageDIC.getStackSize());
-        ImageProcessor filteredImage = filterLabelsByPixelCount(destinationImagePlus.getProcessor(), 1, 99);
-        destinationImagePlus = new ImagePlus("Filtered", filteredImage);
-
-        processedStack.addSlice(destinationImagePlus.getProcessor());
-
-        // Compute the Voronoi diagram for the first frame only
-        // Assumptions :
-        // - The bacteria are initially not too close to each other
-        // - The bacteria do not move too much over all frames
-        if (i == 1) {
-            ImagePlus voronoiImagePlus = voronoiDiagram(destinationImagePlus);
-            this.voronoiDiagram = voronoiImagePlus;
-            // regionDiagramStack.addSlice(voronoiImagePlus.getProcessor());
-        }
-
-        // Delete slice
-        slice.close();
-        destinationImagePlus.close();
-        IJ.log("Finished labeling frame " + i + "/" + this.imageDIC.getStackSize());
-        //////////////
-        // only first two frames for testing
-//        if (i == 2) {
-//            break;
-//        }
-    }
-
-    // Create a new ImagePlus from the processed stack
-    this.bacteriaLabelsNoColonies  = new ImagePlus("Bacteria labels", processedStack);
-
-    // Set Glasbey LUT
-    this.bacteriaLabelsNoColonies.setLut(this.glasbeyLUT);
-    this.voronoiDiagram.setLut(this.glasbeyLUT);
-
-    // Show the result
-    this.bacteriaLabelsNoColonies.show();
-    this.voronoiDiagram.show();
-
-    // Assign colonies
-    this.colonyLabels = getColonyFromDiagram();
-    this.colonyLabels.setLut(this.glasbeyLUT);
-    this.colonyLabels.show();
-    }
-
-    private ImageProcessor filterLabelsByPixelCount(ImageProcessor labels, double lowerPercentile, double upperPercentile) {
+    private ImageProcessor filterLabelsByPixelCount(ImageProcessor labels, double lowerPercentile, double upperPercentile, boolean countRemoved, boolean verbose) {
         // Get the counts of each label
         int[] counts = getUniqueValuesWithCounts(labels);
-        IJ.log("Counts : " + Arrays.toString(counts));
+        // IJ.log("Counts : " + Arrays.toString(counts));
+        // IJ.log("Unique labels : " + counts.length);
         // Calculate the total sum of all counts except the background
         int totalSum = IntStream.of(counts).sum() - counts[0];
 
@@ -201,37 +211,36 @@ public void runColoniesComputation() {
             sum += counts[i];
             cumulativeSum[i] = sum;
         }
-        IJ.log("Total sum : " + totalSum);
-        IJ.log("Cumulative sum : " + Arrays.toString(cumulativeSum));
+        if (verbose) {
+            IJ.log("Total sum : " + totalSum);
+            IJ.log("Cumulative sum : " + Arrays.toString(cumulativeSum));
+        }
+        // Find the threshold where the cumulative sum is just above the lower and upper percentiles of the total sum
+        int lowerCumSumThresh = (int) Math.floor(totalSum * lowerPercentile / 100);
+        int upperCumSumThresh = (int) Math.floor(totalSum * upperPercentile / 100);
 
-        // Find the indices where the cumulative sum is just above the lower and upper percentiles of the total sum
-        int lowerThreshold = findThresholdIndex(cumulativeSum, totalSum * lowerPercentile / 100);
-        int upperThreshold = findThresholdIndex(cumulativeSum, totalSum * upperPercentile / 100);
-
-        IJ.log("Lower threshold : " + lowerThreshold);
-        IJ.log("Upper threshold : " + upperThreshold);
-
+        if (verbose) {
+            IJ.log("Lower threshold : " + lowerCumSumThresh);
+            IJ.log("Upper threshold : " + upperCumSumThresh);
+        }
         // Create a new image where only the labels with counts within the percentile range are kept
         ImageProcessor filteredImage = new ByteProcessor(labels.getWidth(), labels.getHeight());
         for (int y = 0; y < labels.getHeight(); y++) {
             for (int x = 0; x < labels.getWidth(); x++) {
                 int label = labels.get(x, y);
-                if (cumulativeSum[label] >= lowerThreshold && cumulativeSum[label] <= upperThreshold) {
+                if (cumulativeSum[label] >= lowerCumSumThresh && cumulativeSum[label] <= upperCumSumThresh) {
                     filteredImage.set(x, y, label);
                 }
             }
         }
+        if (countRemoved) {
+            int countsBeforeFilt = counts.length;
+            Set<Integer> uniques = getUniqueValues(filteredImage);
+            int countAfterFilt = uniques.size();
+            IJ.log("Removed " + (countsBeforeFilt - countAfterFilt) + " labels");
+        }
         return filteredImage;
     }
-    private int findThresholdIndex(int[] cumulativeSum, double threshold) {
-        for (int i = 0; i < cumulativeSum.length; i++) {
-            if (cumulativeSum[i] > threshold) {
-                return i;
-            }
-        }
-        return cumulativeSum.length - 1;
-    }
-
     /**
      * This method returns a Set of the unique values in the given ImageProcessor.
      * Sort of equivalent to np.unique in Python.
@@ -272,14 +281,13 @@ public void runColoniesComputation() {
     }
     /**
      * This method adds the destination label to the destination ImageProcessor at the positions where the source ImageProcessor has the source label.
-     * It's a replacement for np.where in Python.
+     * It's intended as a (poorly optimized) replacement for np.where in Python.
      * @param source The ImageProcessor to analyze.
      * @param destination The ImageProcessor to modify.
      * @param sourceLabel The value to look for in the source ImageProcessor.
      * @param destinationLabel The value to add to the destination ImageProcessor.
      */
     private void addLabelToResult(ImageProcessor source, ImageProcessor destination, int sourceLabel, int destinationLabel) {
-        // This method adds the destination label to the destination ImageProcessor at the positions where the source ImageProcessor has the source label
         for (int y = 0; y < source.getHeight(); y++) {
             for (int x = 0; x < source.getWidth(); x++) {
                 if (source.getf(x, y) == sourceLabel) { // perhaps use getPixel instead ?
@@ -298,7 +306,6 @@ public void runColoniesComputation() {
     // non-parallel version
     private int[] getUniqueValuesWithCounts(ImageProcessor image, ImageProcessor mask) {
         int[] counts = new int[256]; // Assuming 8-bit image, adjust size for different bit depths
-
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 if (mask.get(x, y) == 1) {
@@ -307,24 +314,21 @@ public void runColoniesComputation() {
                 }
             }
         }
-
         return counts;
     }
     // version that does not take masks into account
     private int[] getUniqueValuesWithCounts(ImageProcessor image) {
         int[] counts = new int[256]; // Assuming 8-bit image, adjust size for different bit depths
-
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 int value = image.get(x, y);
                 counts[value]++;
             }
         }
-
         return counts;
     }
     /**
-     * This method returns the key with the maximum value in the given Map.
+     * This method returns the key with the maximum value in the given Integer array.
      * @param counts The Array to analyze.
      * @return The value with the maximum count in the Array.
      */
@@ -335,10 +339,8 @@ public void runColoniesComputation() {
         if (counts[i] > maxCount) {
             maxLabel = i;
             maxCount = counts[i];
+            }
         }
-    }
     return maxLabel;
-}
-
-
+    }
 }

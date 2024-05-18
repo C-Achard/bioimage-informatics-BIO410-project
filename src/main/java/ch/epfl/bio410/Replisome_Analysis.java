@@ -121,7 +121,7 @@ public class Replisome_Analysis implements Command {
 
 		// Assign colonies
 		Colonies colonies = new Colonies(imageDIC);
-		colonies.runColoniesComputation();
+		colonies.runColoniesComputation(5, 95);
 		colonies.bacteriaLabelsNoColonies.show();
 		colonies.voronoiDiagram.show();
 
