@@ -1,9 +1,18 @@
 package ch.epfl.bio410.utils;
 
+import com.opencsv.CSVReader;
 import ij.ImagePlus;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class implements utils functions
@@ -45,6 +54,37 @@ public class utils {
         ImagePlus dog = ImageCalculator.run(g1, g2, "Subtract create stack");
         return dog;
 
+    }
+/*
+    public static List<List<Double>> read_csv(){
+        String fileName = ".../DATA/analyze_particle_results/Results.csv";
+        try (CSVReader reader = new CSVReader(new FileReader(fileName))) {
+            List<String[]> r = reader.readAll();
+            List<List<Double>> myList = new ArrayList<>();
+
+            r.forEach(lineArr -> {
+                List<Double> line = new ArrayList<>();
+                for (String str : lineArr) {
+                    line.add(Double.parseDouble(str));
+                }
+                myList.add(line);
+            });
+        }
+        return myList;
+    }*/
+
+    public static List<List<String>> read_csv(String path){
+        List<List<String>> records = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return records;
     }
 
 }
