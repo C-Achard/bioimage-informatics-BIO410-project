@@ -190,8 +190,8 @@ public void runColoniesComputation() {
         // Get the counts of each label
         int[] counts = getUniqueValuesWithCounts(labels);
         IJ.log("Counts : " + Arrays.toString(counts));
-        // Calculate the total sum of all counts
-        int totalSum = Arrays.stream(counts).sum();
+        // Calculate the total sum of all counts except the background
+        int totalSum = IntStream.of(counts).sum() - counts[0];
 
         // Calculate the cumulative sum of the counts array
         int[] cumulativeSum = new int[counts.length];
