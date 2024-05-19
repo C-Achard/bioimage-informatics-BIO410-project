@@ -42,6 +42,16 @@ public class Colonies {
      * @param areaFilterHighPercentile The upper percentile of label area allowed
      */
     public void runColoniesComputation(double areaFilterLowPercentile, double areaFilterHighPercentile) {
+        //////////////////////////////////////////////////
+        // TODO : better way to do this may be :
+        // - Get conn comp labels for the first frame
+        // - Compute the area of labels for that frame
+        // - Discard labels that are too small based on area (given pixel thresh)
+        // - Compute the Voronoi diagram for that frame
+        // - On the next frame, *assign labels purely based on Voronoi diag from before*
+        // - Begin again w/o connected comp labeling
+        ///////////////////////////////////////////////
+
         // Create a stack to hold the processed frames
         ImageStack processedStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
         // Below is if we want to get diagram for all frames
@@ -340,6 +350,7 @@ private ImagePlus voronoiDiagram(ImagePlus slice) {
     return maxLabel;
     }
     public void freeMemory() {
+    // attempt at freeing memory after colonies computation
     this.bacteriaLabelsNoColonies = null;
     this.voronoiDiagram = null;
     System.gc();
