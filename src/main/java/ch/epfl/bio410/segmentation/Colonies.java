@@ -9,6 +9,8 @@ import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
+
+import java.awt.*;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
@@ -54,6 +56,7 @@ public class Colonies {
 
         // Create a stack to hold the processed frames
         ImageStack processedStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
+        ImagePlus prevFrameVoronoi = null; // used to store the Voronoi diagram of the previous frame
         // Below is if we want to get diagram for all frames
         // ImageStack regionDiagramStack = new ImageStack(this.imageDIC.getWidth(), this.imageDIC.getHeight());
         IJ.log("Computing labels for bacteria");
@@ -64,32 +67,24 @@ public class Colonies {
             ImageProcessor frame = this.imageDIC.getStack().getProcessor(i);
             ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
 
-            // Process the slice
-            ImagePlus destinationImagePlus = connectedComponentsLabeling(slice);
-            // ImagePlus destinationImagePlus = voronoiOtsuLabeling(slice);
-
-
-            // FIXME : the filtering is per-frame, meaning it might not always remove labels consistently
-            IJ.log("Filtering frame " + i + "/" + this.imageDIC.getStackSize());
-            ImageProcessor filteredImage = filterLabelsByPixelCount(
-                    destinationImagePlus.getProcessor(),
-                    areaFilterLowPercentile,
-                    areaFilterHighPercentile,
-                    true,
-                    false
-            );
-            destinationImagePlus = new ImagePlus("Filtered", filteredImage);
-
-            processedStack.addSlice(destinationImagePlus.getProcessor());
-
-            // Compute the Voronoi diagram for the first frame only
-            // Assumptions :
-            // - The bacteria are initially not too close to each other
-            // - The bacteria do not move too much over all frames
+            // Process the first frame with connected components labeling
+            ImagePlus destinationImagePlus = null;
             if (i == 1) {
-                this.voronoiDiagram = voronoiDiagram(destinationImagePlus);
-                // regionDiagramStack.addSlice(voronoiImagePlus.getProcessor());
+                IJ.log("Processing first frame with connected components labeling");
+                destinationImagePlus = connectedComponentsLabeling(slice);
+            } else {
+                IJ.log("Processing frame " + i + "/" + this.imageDIC.getStackSize());
+                // use the prev. frame's Voronoi diagram to assign labels
+                destinationImagePlus = assignLabelsFromVoronoi(prevFrameVoronoi, slice);
             }
+            // get statistics from clij
+            double[][] stats = getLabelStats(destinationImagePlus, slice);
+            IJ.log("Stats for frame :" + stats);
+            // TODO filter by area here
+
+            // Get Voronoi diagram of this frame
+            prevFrameVoronoi = voronoiDiagram(destinationImagePlus);
+            processedStack.addSlice(destinationImagePlus.getProcessor());
 
             // Delete slice
             slice.close();
@@ -97,23 +92,42 @@ public class Colonies {
             IJ.log("Finished labeling frame " + i + "/" + this.imageDIC.getStackSize());
             //////////////
             // only first ten frames (for testing)
-    //        if (i == 10) {
-    //            break;
-    //        }
+            if (i == 10) {
+                break;
+            }
         }
 
     // Create a new ImagePlus from the processed stack
-    this.bacteriaLabelsNoColonies  = new ImagePlus("Bacteria labels", processedStack);
-
+//    this.bacteriaLabelsNoColonies  = new ImagePlus("Bacteria labels", processedStack);
+    this.colonyLabels = new ImagePlus("Colony labels", processedStack);
     // Set Glasbey LUT
-    this.bacteriaLabelsNoColonies.setLut(this.glasbeyLUT);
-    this.voronoiDiagram.setLut(this.glasbeyLUT);
-
-    // Assign colonies
-    this.colonyLabels = getColonyFromDiagram();
     this.colonyLabels.setLut(this.glasbeyLUT);
-//    this.colonyLabels.show();
     }
+
+private ImagePlus assignLabelsFromVoronoi(ImagePlus prevFrameVoronoi, ImagePlus frameToLabel) {
+    // For the current frame, loop over the pixels in Voronoi. If the frameToLabel pixel is not 0, assign the Voronoi pixel to it
+    ImageProcessor voronoi = prevFrameVoronoi.getProcessor();
+    ImageProcessor frame = frameToLabel.getProcessor();
+    ImageProcessor result = new ByteProcessor(frame.getWidth(), frame.getHeight());
+    for (int y = 0; y < frame.getHeight(); y++) {
+        for (int x = 0; x < frame.getWidth(); x++) {
+            if (frame.get(x, y) != 0) {
+                result.set(x, y, voronoi.get(x, y));
+            }
+        }
+    }
+    return new ImagePlus("Assigned labels", result);
+}
+
+private double[][] getLabelStats(ImagePlus slice, ImagePlus DICFrame) {
+    ClearCLBuffer input = clij2.push(DICFrame);
+    ClearCLBuffer labelmap = clij2.push(slice);
+    double[][] stats = clij2.statisticsOfBackgroundAndLabelledPixels(input, labelmap);
+    clij2.release(input);
+    clij2.release(labelmap);
+    return stats;
+}
+
 private ImagePlus getColonyFromDiagram() {
     // This is emulating the following python (pseudo)code (but poorly optimized ):
     // result = np.zeros_like(bacteriaLabelsNoColonies)
