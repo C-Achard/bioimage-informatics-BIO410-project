@@ -4,7 +4,13 @@ import ij.ImagePlus;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
+import ij.process.LUT;
+import ij.plugin.LutLoader;
 
+import java.awt.*;
+import java.awt.image.IndexColorModel;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
 
@@ -18,6 +24,30 @@ public class utils {
     public static String getFolderPathInResources(String folderName) {
         URL resourceURL = utils.class.getClassLoader().getResource(folderName);
         return Paths.get(resourceURL.getPath()).toString();
+    }
+
+    public static LUT getGlasbeyLUT() {
+        InputStream lutStream = utils.class.getClassLoader().getResourceAsStream("glasbey.lut");
+        IndexColorModel glasbeyLut = null;
+        try {
+            glasbeyLut = new LutLoader().open(lutStream);
+        } catch (IOException e) {
+            IJ.log("Failed to load Glasbey LUT");
+            e.printStackTrace();
+        }
+        byte[] r = new byte[256];
+        byte[] g = new byte[256];
+        byte[] b = new byte[256];
+        glasbeyLut.getBlues(b);
+        glasbeyLut.getGreens(g);
+        glasbeyLut.getReds(r);
+
+        // Set first color to black
+        r[0] = (byte) Color.BLACK.getRed();
+        g[0] = (byte) Color.BLACK.getGreen();
+        b[0] = (byte) Color.BLACK.getBlue();
+
+        return new LUT(r, g, b);
     }
 
     public static ImagePlus remove_noise(ImagePlus imp, double sigma) {

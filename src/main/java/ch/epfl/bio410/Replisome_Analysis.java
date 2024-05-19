@@ -1,9 +1,10 @@
 package ch.epfl.bio410;
 
 import java.io.FilenameFilter;
-import java.nio.file.Paths;
 import java.io.IOException;
+import java.nio.file.Paths;
 
+import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.TrackingConfig;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
@@ -19,9 +20,9 @@ import java.io.File;
 import java.util.List;
 
 // import tracking from local package
-import ch.epfl.bio410.tracking.Tracking;
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
+import ch.epfl.bio410.tracking.Tracking;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -121,6 +122,17 @@ public class Replisome_Analysis implements Command {
 		IJ.log("Segmentation of DIC channel");
 		segmentation.segment(denoised);
 		denoised.show();
+
+		// Assign colonies
+		Colonies colonies = new Colonies(imageDIC);
+		colonies.runColoniesComputation(5, 95);
+//		colonies.bacteriaLabelsNoColonies.show();
+//		colonies.voronoiDiagram.show();
+		colonies.bacteriaLabelsNoColonies.close();
+		colonies.voronoiDiagram.close();
+		colonies.freeMemory();
+
+		colonies.colonyLabels.show();
 
 		IJ.run("Tile");
 
