@@ -1,5 +1,6 @@
 package ch.epfl.bio410.tracking;
 
+import ch.epfl.bio410.utils.TrackingConfig;
 import fiji.plugin.trackmate.*;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
@@ -8,7 +9,6 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettingsIO;
 import fiji.plugin.trackmate.tracking.jaqaman.SparseLAPTrackerFactory;
-import fiji.plugin.trackmate.visualization.table.AllSpotsTableView;
 import fiji.plugin.trackmate.visualization.table.TrackTableView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import ij.IJ;
@@ -19,42 +19,20 @@ import java.io.IOException;
 
 public class Tracking {
      // Default config
-     public static final double DETECTOR_RADIUS = 0.31d;
-    public static final double DETECTOR_THRESHOLD = 30.0d;
-    public static final boolean DETECTOR_MEDIAN_FILTER = true;
-    public static final double TRACKER_LINKING_MAX_DISTANCE = 1.0d;
-    public static final double TRACKER_GAP_CLOSING_MAX_DISTANCE = 1.0d;
-    public static final int TRACKER_MAX_FRAME_GAP = 4;
-    public static final double TRACK_DURATION_MIN = 8.0d;
+
     private TrackingConfig trackingConfig;
     private DisplaySettings displaySettings;
 
     public String trackingConfigName;
     public String trackingConfigPath;
     /** Returns the default configuration parameters. */
-    public TrackingConfig useDefaultConfig() {
-        this.trackingConfig = new TrackingConfig(
-                DETECTOR_RADIUS,
-                DETECTOR_THRESHOLD,
-                DETECTOR_MEDIAN_FILTER,
-                TRACKER_LINKING_MAX_DISTANCE,
-                TRACKER_GAP_CLOSING_MAX_DISTANCE,
-                TRACKER_MAX_FRAME_GAP,
-                TRACK_DURATION_MIN
-        );
+    public TrackingConfig loadDefaultConfig() {
+        this.trackingConfig = new TrackingConfig();
         return this.trackingConfig;
     }
-
-    /**
-    * Load configuration parameters from a properties file
-    * @param filename Name of the file to load from resources.
-    * @return TrackingConfig object with the loaded parameters.
-    */
-    public TrackingConfig loadConfig(String filename) {
-        this.trackingConfig = TrackingConfig.createFromPropertiesFile(filename);
-        return this.trackingConfig;
+    public void setConfig(TrackingConfig trackingConfig) {
+        this.trackingConfig = trackingConfig;
     }
-
     /**
      * Set the configuration parameters for tracking.
      * @param detector_radius Radius of the object in um
@@ -67,6 +45,7 @@ public class Tracking {
      * @return
      */
     public TrackingConfig setConfig(
+            int colony_min_area,
             double detector_radius,
             double detector_threshold,
             boolean detector_median_filter,
@@ -76,6 +55,7 @@ public class Tracking {
             double track_duration_min
     ) {
         this.trackingConfig = new TrackingConfig(
+                colony_min_area,
                 detector_radius,
                 detector_threshold,
                 detector_median_filter,
@@ -93,18 +73,18 @@ public class Tracking {
      */
     public Model runTracking(ImagePlus imp) {
         IJ.log("------------------ TRACKMATE ------------------");
-        this.trackingConfig.printConfig(); // show parameters
+        this.trackingConfig.printTrackingConfig(); // show parameters
         IJ.log("Tracking started");
+        // if config is not set, use default config
+        if (this.trackingConfig == null) {
+            this.loadDefaultConfig();
+        }
         // Instantiate model object and logger
         Model model = new Model();
         model.setLogger(Logger.IJ_LOGGER);
         // Prepare settings object
         Settings settings = new Settings(imp);
 
-        // if config is not set, use default config
-        if (this.trackingConfig == null) {
-            this.useDefaultConfig();
-        }
 
         // Configure detector
         settings.detectorFactory = new LogDetectorFactory();

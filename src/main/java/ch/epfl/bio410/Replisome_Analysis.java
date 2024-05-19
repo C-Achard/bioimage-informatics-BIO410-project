@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import ch.epfl.bio410.segmentation.Colonies;
-import ch.epfl.bio410.tracking.TrackingConfig;
+import ch.epfl.bio410.utils.TrackingConfig;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
@@ -27,21 +27,24 @@ import ch.epfl.bio410.tracking.Tracking;
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
-
-		/////////// EXAMPLE, PLEASE ADAPT TO YOUR NEEDS ///////////
-
 		// Default path is 5 folders above the current folder, in DATA
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
-//		private String path = utils.getFolderPathInResources("DATA"); does not work, as it means including several Gbs of data in the jar
+		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
+		private final int colony_min_area = 50; // Colony assignment parameters, minimum colony area
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
-		private final boolean medianFilter = true; // Detection parameters, median filter
+		private final boolean medianFilter = true; // Detection parameters, do median filter (GFP channel only, before detection in TrackMate)
     	private final double sigma = 10;  // Detection parameters, sigma of the DoG
 
 		private final double maxLinkDistance = 1.0; // Tracking parameters, max linking distance between objects
 		private final double maxGapDistance = 1.0; // Tracking parameters, max gap distance to close a track across frames
 		private final int maxFrameGap = 4; // Tracking parameters, max frame gap allowed for tracking
 		private final double durationFilter = 8.0; // Tracking parameters, duration filter (min duration of a track)
+
+		private TrackingConfig config;
+	/**
+	 * This method is called when the command is run.
+	 */
 	public void run() {
 		GenericDialog dlg = new GenericDialog("Replisome Analysis");
 		dlg.addDirectoryField("Path to the image", path);
@@ -58,6 +61,9 @@ public class Replisome_Analysis implements Command {
 		}
 		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
 		dlg.addMessage("__________________________");
+		dlg.addMessage("Display options :");
+		dlg.addCheckbox("Show colony regions", false);
+		dlg.addMessage("__________________________");
 		dlg.addMessage("Use existing config, or set new parameters :");
 		dlg.addCheckbox("Use existing config", true);
 		// add config choices
@@ -69,6 +75,9 @@ public class Replisome_Analysis implements Command {
 		//////// PARAMETERS (if not using existing config) ///////////
 		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
+		// Colony assignment parameters
+		dlg.addMessage("Colony assignment parameters");
+		dlg.addNumericField("Minimum colony area", colony_min_area, 0);
 		// detection parameters
 		dlg.addMessage("Detection parameters");
 		dlg.addNumericField("Radius (um)", radius, 2);
@@ -84,22 +93,46 @@ public class Replisome_Analysis implements Command {
 		if (dlg.wasCanceled()) return;
 
 		// Get all the parameters
+		//// PATH
 		String path = dlg.getNextString();
 		String image = dlg.getNextChoice();
+		//// DISPLAY
+		boolean showColonyVoronoi = dlg.getNextBoolean();
+		//// CONFIG (Existing)
 		boolean useExistingConfig = dlg.getNextBoolean();
-		String config_name = dlg.getNextChoice();
+		String configName = dlg.getNextChoice();
+		// Colony detection parameters
+		int colony_min_area = (int) dlg.getNextNumber();
+		// Detection parameters
 		double radius = dlg.getNextNumber();
 		double threshold = dlg.getNextNumber();
 		boolean medianFilter = dlg.getNextBoolean();
+		// Tracking parameters
 		double maxLinkDistance = dlg.getNextNumber();
 		double maxGapDistance = dlg.getNextNumber();
 		int maxFrameGap = (int) dlg.getNextNumber();
 		double durationFilter = dlg.getNextNumber();
 
+		// Set the config if needed
+		if (!useExistingConfig) {
+			this.config = new TrackingConfig(
+					colony_min_area,
+					radius,
+					threshold,
+					medianFilter,
+					maxLinkDistance,
+					maxGapDistance,
+					maxFrameGap,
+					durationFilter
+			);
+		} else {
+			this.config = TrackingConfig.createFromPropertiesFile(configName);
+		}
+
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
-    //pour mathilde 
-    //String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
+    	//pour mathilde
+    	//String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
@@ -112,73 +145,65 @@ public class Replisome_Analysis implements Command {
 		imageGFP.show();
 		// Tile
 		IJ.run("Tile");
-    
-		// Removing noise
-		IJ.log("Removing noise in DIC channel");
-		ImagePlus denoised = utils.remove_noise(imageDIC,sigma);
-		denoised.show();
 
-		// Segmentation
-		IJ.log("Segmentation of DIC channel");
-		segmentation.segment(denoised);
-		denoised.show();
+		boolean computeColonies = true;
+		if (computeColonies) {
+			IJ.log("------------------ COLONIES ------------------");
+			// Print the configuration
+			this.config.printColonyConfig();
+			// Removing noise
+			IJ.log("Removing noise in DIC channel");
+			ImagePlus denoised = utils.remove_noise(imageDIC, sigma);
+			denoised.show();
 
-		// Assign colonies
-		Colonies colonies = new Colonies(imageDIC);
-		colonies.runColoniesComputation(5, 95);
-//		colonies.bacteriaLabelsNoColonies.show();
-//		colonies.voronoiDiagram.show();
-		colonies.bacteriaLabelsNoColonies.close();
-		colonies.voronoiDiagram.close();
-		colonies.freeMemory();
+			// Segmentation
+			IJ.log("Segmentation of DIC channel");
+			segmentation.segment(denoised);
+			denoised.show();
 
-		colonies.colonyLabels.show();
-
-		IJ.run("Tile");
-
-		Tracking tracker = new Tracking();
-		// Note : model and config are exposed for later if needed
-		if (!useExistingConfig) {
-			TrackingConfig config = tracker.setConfig(
-					radius,
-					threshold,
-					medianFilter,
-					maxLinkDistance,
-					maxGapDistance,
-					maxFrameGap,
-					durationFilter
-			);
+			// Assign colonies
+			Colonies colonies = new Colonies(imageDIC);
+			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
+			colonies.colonyLabels.show();
+			if (showColonyVoronoi) {
+				colonies.voronoiDiagrams.show();
+			}
+			IJ.run("Tile");
 		}
-		// load the config if it exists
-		if (useExistingConfig && config_name != null) {
-			TrackingConfig config = tracker.loadConfig(config_name);
-		}
-		Model model = tracker.runTracking(imageGFP);
-		FeatureModel featureModel = model.getFeatureModel();
-		// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
 
-		// Save the results to CSV
-		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
-		// create "results" folder if it doesn't exist
-		File resultsFolder = Paths.get(path, "results").toFile();
-		if (!resultsFolder.exists()) {
-			if (resultsFolder.mkdir()) {
-				IJ.log("Directory is created!");
-			} else {
-				IJ.log("Failed to create directory!");
-				throw new RuntimeException("Failed to create results directory. Aborting.");
+
+		boolean computeTracking = true;
+		if (computeTracking) {
+
+			Tracking tracker = new Tracking();
+			tracker.setConfig(config);
+			// Note : model and config are exposed for later if needed
+			Model model = tracker.runTracking(imageGFP);
+			FeatureModel featureModel = model.getFeatureModel();
+			// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
+
+			// Save the results to CSV
+			String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
+			// create "results" folder if it doesn't exist
+			File resultsFolder = Paths.get(path, "results").toFile();
+			if (!resultsFolder.exists()) {
+				if (resultsFolder.mkdir()) {
+					IJ.log("Directory is created!");
+				} else {
+					IJ.log("Failed to create directory!");
+					throw new RuntimeException("Failed to create results directory. Aborting.");
+				}
+			}
+			String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+			String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
+			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+			try {
+				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
-		String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
-		String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
-		File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
-		File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
-        try {
-            tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
 
