@@ -99,14 +99,10 @@ public class Colonies {
     this.bacteriaLabelsNoColonies.setLut(this.glasbeyLUT);
     this.voronoiDiagram.setLut(this.glasbeyLUT);
 
-    // Show the result
-    this.bacteriaLabelsNoColonies.show();
-    this.voronoiDiagram.show();
-
     // Assign colonies
     this.colonyLabels = getColonyFromDiagram();
     this.colonyLabels.setLut(this.glasbeyLUT);
-    this.colonyLabels.show();
+//    this.colonyLabels.show();
     }
 private ImagePlus getColonyFromDiagram() {
     // This is emulating the following python (pseudo)code (but poorly optimized ):
@@ -343,4 +339,9 @@ private ImagePlus voronoiDiagram(ImagePlus slice) {
         }
     return maxLabel;
     }
+    public void freeMemory() {
+    this.bacteriaLabelsNoColonies = null;
+    this.voronoiDiagram = null;
+    System.gc();
+}
 }

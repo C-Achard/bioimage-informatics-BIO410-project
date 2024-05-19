@@ -1,10 +1,13 @@
 package ch.epfl.bio410;
 
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.TrackingConfig;
+import fiji.plugin.trackmate.FeatureModel;
+import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -19,6 +22,7 @@ import java.util.List;
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
+import ch.epfl.bio410.tracking.Tracking;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -122,56 +126,58 @@ public class Replisome_Analysis implements Command {
 		// Assign colonies
 		Colonies colonies = new Colonies(imageDIC);
 		colonies.runColoniesComputation(5, 95);
-		colonies.bacteriaLabelsNoColonies.show();
-		colonies.voronoiDiagram.show();
+//		colonies.bacteriaLabelsNoColonies.show();
+//		colonies.voronoiDiagram.show();
+		colonies.bacteriaLabelsNoColonies.close();
+		colonies.voronoiDiagram.close();
+		colonies.freeMemory();
+
+		colonies.colonyLabels.show();
 
 		IJ.run("Tile");
 
-		//// TEMP STOP POINT
-		return;
+		Tracking tracker = new Tracking();
+		// Note : model and config are exposed for later if needed
+		if (!useExistingConfig) {
+			TrackingConfig config = tracker.setConfig(
+					radius,
+					threshold,
+					medianFilter,
+					maxLinkDistance,
+					maxGapDistance,
+					maxFrameGap,
+					durationFilter
+			);
+		}
+		// load the config if it exists
+		if (useExistingConfig && config_name != null) {
+			TrackingConfig config = tracker.loadConfig(config_name);
+		}
+		Model model = tracker.runTracking(imageGFP);
+		FeatureModel featureModel = model.getFeatureModel();
+		// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
 
-//		Tracking tracker = new Tracking();
-//		// Note : model and config are exposed for later if needed
-//		if (!useExistingConfig) {
-//			TrackingConfig config = tracker.setConfig(
-//					radius,
-//					threshold,
-//					medianFilter,
-//					maxLinkDistance,
-//					maxGapDistance,
-//					maxFrameGap,
-//					durationFilter
-//			);
-//		}
-//		// load the config if it exists
-//		if (useExistingConfig && config_name != null) {
-//			TrackingConfig config = tracker.loadConfig(config_name);
-//		}
-//		Model model = tracker.runTracking(imageGFP);
-//		FeatureModel featureModel = model.getFeatureModel();
-//		// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
-//
-//		// Save the results to CSV
-//		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
-//		// create "results" folder if it doesn't exist
-//		File resultsFolder = Paths.get(path, "results").toFile();
-//		if (!resultsFolder.exists()) {
-//			if (resultsFolder.mkdir()) {
-//				IJ.log("Directory is created!");
-//			} else {
-//				IJ.log("Failed to create directory!");
-//				throw new RuntimeException("Failed to create results directory. Aborting.");
-//			}
-//		}
-//		String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
-//		String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
-//		File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
-//		File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
-//        try {
-//            tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+		// Save the results to CSV
+		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
+		// create "results" folder if it doesn't exist
+		File resultsFolder = Paths.get(path, "results").toFile();
+		if (!resultsFolder.exists()) {
+			if (resultsFolder.mkdir()) {
+				IJ.log("Directory is created!");
+			} else {
+				IJ.log("Failed to create directory!");
+				throw new RuntimeException("Failed to create results directory. Aborting.");
+			}
+		}
+		String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+		String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
+		File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+		File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+        try {
+            tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
