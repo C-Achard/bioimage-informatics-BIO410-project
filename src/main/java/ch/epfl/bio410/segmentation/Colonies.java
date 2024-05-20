@@ -9,6 +9,8 @@ import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
+
+import java.nio.file.FileSystems;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -164,7 +166,7 @@ public class Colonies {
     // Set Glasbey LUT
     this.colonyLabels.setLut(this.glasbeyLUT);
     if (keepVoronoi) {
-        this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack.duplicate());
+        this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);
         this.voronoiDiagramStack = null;
         this.voronoiDiagrams.setLut(this.glasbeyLUT);
         }
@@ -211,6 +213,19 @@ private double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
     clij2.release(input);
     clij2.release(labelmap);
     return stats;
+}
+
+public void saveResults(String path, String filename) {
+    // Save the colony labels
+    String coloniesPath = path + FileSystems.getDefault().getSeparator() + filename + "_colony_labels.tif";
+    IJ.log("Saving colony labels to " + coloniesPath);
+    IJ.saveAsTiff(this.colonyLabels, coloniesPath);
+    // Save the Voronoi diagrams
+    if (this.voronoiDiagrams != null) {
+        String voronoiPath = path + FileSystems.getDefault().getSeparator() + filename + "_voronoi_diagrams.tif";
+        IJ.log("Saving Voronoi diagrams to " + voronoiPath);
+        IJ.saveAsTiff(this.voronoiDiagrams, voronoiPath);
+    }
 }
 
 private ImagePlus filterLabelsByArea(ImagePlus labels, double minLabelArea, double[][] stats) {
