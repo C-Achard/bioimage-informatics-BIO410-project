@@ -46,3 +46,6 @@ gradle.properties
 *.pdf
 *.csv
 !DATA/results/*.csv
+
+# docs
+site/
