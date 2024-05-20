@@ -30,6 +30,8 @@ public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
 		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
+		private final boolean runColonies = true;
+		private final boolean runTracking = true;
 		private final int colony_min_area = 50; // Colony assignment parameters, minimum colony area
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
@@ -59,21 +61,24 @@ public class Replisome_Analysis implements Command {
 			fileList = new String[]{};
 			IJ.log("No images found in folder " + path + ", please enter the path to the folder with images");
 		}
+		///////////// DIALOG /////////////
+		// Image choice
 		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
 		dlg.addMessage("__________________________");
-		dlg.addMessage("Display options :");
-		dlg.addCheckbox("Show colony regions", false);
+		// Choose what to run
+		dlg.addCheckbox("Run colony detection on DIC channel", runColonies);
+		dlg.addCheckbox("Run tracking on GFP channel", runTracking);
 		dlg.addMessage("__________________________");
+		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
 		dlg.addCheckbox("Use existing config", true);
-		// add config choices
 		List<String> configList = TrackingConfig.listAvailableConfigs();
 		if (configList.size() == 0) {
 			IJ.log("No config files found in folder " + path + ", please set the parameters");
 		}
 		dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
 		//////// PARAMETERS (if not using existing config) ///////////
-		dlg.addMessage("__________________________");
+//		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
 		// Colony assignment parameters
 		dlg.addMessage("Colony assignment parameters");
@@ -89,6 +94,10 @@ public class Replisome_Analysis implements Command {
 		dlg.addNumericField("Max gap distance", maxGapDistance, 2);
 		dlg.addNumericField("Max frame gap", maxFrameGap, 0);
 		dlg.addNumericField("Duration filter", durationFilter, 2);
+		dlg.addMessage("__________________________");
+		// Display options
+		dlg.addMessage("Display options :\n(WARNING : May cause memory issues for large images)");
+		dlg.addCheckbox("Show colony regions (Voronoi diagram for each frame)", false);
 		dlg.showDialog();
 		if (dlg.wasCanceled()) return;
 
@@ -96,8 +105,9 @@ public class Replisome_Analysis implements Command {
 		//// PATH
 		String path = dlg.getNextString();
 		String image = dlg.getNextChoice();
-		//// DISPLAY
-		boolean showColonyVoronoi = dlg.getNextBoolean();
+		//// CHOICES OF COMPUTATION
+		boolean computeColonies = dlg.getNextBoolean();
+		boolean computeTracking = dlg.getNextBoolean();
 		//// CONFIG (Existing)
 		boolean useExistingConfig = dlg.getNextBoolean();
 		String configName = dlg.getNextChoice();
@@ -112,6 +122,8 @@ public class Replisome_Analysis implements Command {
 		double maxGapDistance = dlg.getNextNumber();
 		int maxFrameGap = (int) dlg.getNextNumber();
 		double durationFilter = dlg.getNextNumber();
+		//// DISPLAY
+		boolean showColonyVoronoi = dlg.getNextBoolean();
 
 		// Set the config if needed
 		if (!useExistingConfig) {
@@ -131,6 +143,11 @@ public class Replisome_Analysis implements Command {
 
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
+		// Results
+		// Save the results to CSV
+		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
+		// create "results" folder if it doesn't exist
+		File resultsFolder = Paths.get(path, "results").toFile();
     	//pour mathilde
     	//String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
 		ImagePlus imp = IJ.openImage(imagePath);
@@ -146,7 +163,6 @@ public class Replisome_Analysis implements Command {
 		// Tile
 		IJ.run("Tile");
 
-		boolean computeColonies = true;
 		if (computeColonies) {
 			IJ.log("------------------ COLONIES ------------------");
 			// Print the configuration
@@ -169,10 +185,14 @@ public class Replisome_Analysis implements Command {
 				colonies.voronoiDiagrams.show();
 			}
 			IJ.run("Tile");
+			try {
+				colonies.saveResults(Paths.get(path, "results").toString(), imageNameWithoutExtension);
+			} catch (Exception e) {
+				IJ.log("ERROR : Failed to save colonies results.");
+				throw new RuntimeException(e);
+			}
 		}
 
-
-		boolean computeTracking = true;
 		if (computeTracking) {
 
 			Tracking tracker = new Tracking();
@@ -182,10 +202,6 @@ public class Replisome_Analysis implements Command {
 			FeatureModel featureModel = model.getFeatureModel();
 			// see https://imagej.net/plugins/trackmate/scripting/scripting#display-spot-edge-and-track-numerical-features-after-tracking for ways to get the features
 
-			// Save the results to CSV
-			String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
-			// create "results" folder if it doesn't exist
-			File resultsFolder = Paths.get(path, "results").toFile();
 			if (!resultsFolder.exists()) {
 				if (resultsFolder.mkdir()) {
 					IJ.log("Directory is created!");
