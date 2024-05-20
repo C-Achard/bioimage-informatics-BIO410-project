@@ -55,23 +55,6 @@ public class utils {
         return dog;
 
     }
-/*
-    public static List<List<Double>> read_csv(){
-        String fileName = ".../DATA/analyze_particle_results/Results.csv";
-        try (CSVReader reader = new CSVReader(new FileReader(fileName))) {
-            List<String[]> r = reader.readAll();
-            List<List<Double>> myList = new ArrayList<>();
-
-            r.forEach(lineArr -> {
-                List<Double> line = new ArrayList<>();
-                for (String str : lineArr) {
-                    line.add(Double.parseDouble(str));
-                }
-                myList.add(line);
-            });
-        }
-        return myList;
-    }*/
 
     public static List<List<String>> read_csv(String path){
         List<List<String>> records = new ArrayList<>();
