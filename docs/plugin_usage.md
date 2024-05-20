@@ -9,12 +9,13 @@ The plugin will be listed under `BII > Replisome Analysis`.
 
 Specify the path to the folder containing the images you wish to analyze, then select the image you wish to analyze.
 
-## Configuration
 
 ## Choosing what to run
 
 The plugin provides two distinct analysis workflows, Colony Detection and Replisome Tracking.
 You can run both or only one of these workflows by checking the boxes in the `Run` section.
+
+## Configuration
 
 ### Using an existing configuration
 
