@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - cy/docs-init
 
 jobs:
   build:
