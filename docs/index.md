@@ -5,8 +5,7 @@
 
 This ImageJ plugin is intended to provide an automated analysis of DNA replication dynamics in bacteria.
 
-### Intended Use
-
+## Intended Use
 
 This plugin works for images of bacteria, specifically with a DIC channel and a fluorescent channel. The plugin is designed to analyze the dynamics of DNA replication in bacteria, specifically the movement of the replisome.
 
