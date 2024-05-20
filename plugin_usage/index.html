@@ -9,8 +9,6 @@
       
       
       
-        <link rel="prev" href="..">
-      
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -18,7 +16,7 @@
     
     
       
-        <title>About - Replisome Analysis</title>
+        <title>Plugin usage - Replisome Analysis</title>
       
     
     
@@ -70,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#welcome-to-the-replisome-analysis-plugin" class="md-skip">
+        <a href="#plugin-usage" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              About
+              Plugin usage
             
           </span>
         </div>
@@ -252,30 +250,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    About
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -284,44 +262,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#intended-use" class="md-nav__link">
-    <span class="md-ellipsis">
-      Intended Use
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -353,20 +293,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#intended-use" class="md-nav__link">
+  <a href="#launching-the-plugin" class="md-nav__link">
     <span class="md-ellipsis">
-      Intended Use
+      Launching the plugin
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#choosing-an-image" class="md-nav__link">
     <span class="md-ellipsis">
-      Installation
+      Choosing an image
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-what-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choosing what to run
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Choosing what to run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-an-existing-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using an existing configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-a-new-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying a new configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#display-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Display options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -385,14 +376,38 @@
                   
 
 
-<h1 id="welcome-to-the-replisome-analysis-plugin">Welcome to the Replisome Analysis Plugin</h1>
-<h2 id="intended-use">Intended Use</h2>
-<p>This plugin works for images of bacteria, specifically with a DIC channel and a fluorescent channel. The plugin is designed to analyze the dynamics of DNA replication in bacteria, specifically the movement of the replisome.</p>
-<p>Bacteria are assigned to colonies using the DIC channel, and GFP-tagged DNaN in the second channel is used to track the replisome. The plugin can be used to track the movement of the replisome.</p>
-<p>Various plots and statistics can be generated from the data.</p>
-<h2 id="installation">Installation</h2>
-<p>To install the plugin, take the provided .jar file in GitHub Packages and place it in the plugins folder of your ImageJ installation. </p>
-<p>The plugin will then be available in the ImageJ menu under Plugins &gt; Replisome Analysis.</p>
+<h1 id="plugin-usage">Plugin usage</h1>
+<h2 id="launching-the-plugin">Launching the plugin</h2>
+<p>To launch the plugin, open ImageJ and navigate to the <code>Plugins</code> menu. 
+The plugin will be listed under <code>BII &gt; Replisome Analysis</code>.</p>
+<h2 id="choosing-an-image">Choosing an image</h2>
+<p>Specify the path to the folder containing the images you wish to analyze, then select the image you wish to analyze.</p>
+<h2 id="configuration">Configuration</h2>
+<h2 id="choosing-what-to-run">Choosing what to run</h2>
+<p>The plugin provides two distinct analysis workflows, Colony Detection and Replisome Tracking.
+You can run both or only one of these workflows by checking the boxes in the <code>Run</code> section.</p>
+<h3 id="using-an-existing-configuration">Using an existing configuration</h3>
+<p>For default images, some configurations are already available, these will be used if you check the relevant box.
+You can then select one of these configurations from the dropdown menu.</p>
+<h3 id="specifying-a-new-configuration">Specifying a new configuration</h3>
+<p>If you wish to specify a new configuration, simply uncheck the box and fill in the fields as required.</p>
+<ul>
+<li>Colony detection :</li>
+<li>Minimum colony area: The minimum area of a colony in pixels.</li>
+<li>Tracking replisomes :</li>
+<li>Radius : the mean radius of the replisome in microns.</li>
+<li>Quality threshold : the minimum quality of the spots. Spots with a quality below this threshold will be discarded.</li>
+<li>Median filter : whether to apply a median filter to the image before tracking the replisomes.</li>
+<li>Max linking distance : the maximum distance in microns that a spot can move between frames.</li>
+<li>Max gap distance : the maximum gap in microns for merging two tracks. This will join two tracks if the distance between the end of one track and the start of the next is less than this value.</li>
+<li>Max frame gap : the maximum number of frames that can be skipped when linking two tracks.</li>
+<li>Duration filter : the minimum duration of a track in frames. Any track shorter than this will be discarded.</li>
+</ul>
+<h3 id="display-options">Display options</h3>
+<p>You can choose to display additional results, at the cost of more memory usage.</p>
+<ul>
+<li>Show colony regions : the Voronoi diagram used to assign spots to colonies will be displayed.</li>
+</ul>
 
 
 
