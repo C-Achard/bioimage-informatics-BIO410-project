@@ -16,7 +16,7 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <name>Project template</name> <!-- Replace the name & description by your project -->
-    <description>Minimal repository and piece of code to run code and use git/GitLab</description>
+    <description>Replisome Analysis Plugin : part of the BIO-410 course @ EPFL</description>
     <inceptionYear>2024</inceptionYear>
     <url>https://edu.epfl.ch/coursebook/en/bioimage-informatics-BIO-410</url>
     <organization>
@@ -40,9 +40,9 @@
     <developers>
         <!-- Add the group members as developers -->
         <developer>
-            <id>yourFavoriteSurname</id>
-            <name>Your name</name>
-            <url>link to your epfl people profile</url>
+            <id>C-Achard</id>
+            <name>Cyril Achard</name>
+            <url>https://people.epfl.ch/cyril.achard?lang=en</url>
             <roles>
                 <role>founder</role>
                 <role>lead</role>
@@ -56,7 +56,7 @@
     </developers>
 
     <contributors>
-        <!-- Add the group members as contributors -->
+        <!-- Add the teachers as contributors -->
         <contributor>
             <name>Daniel Sage</name>
             <url>http://bigwww.epfl.ch/sage/</url>

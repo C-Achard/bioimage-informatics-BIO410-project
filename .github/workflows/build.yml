@@ -17,13 +17,14 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '8'
+      - name : Create javadoc
+        run: mvn javadoc:javadoc
       - name: Publish package
         run: mvn --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
-    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
