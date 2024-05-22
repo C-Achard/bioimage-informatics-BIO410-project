@@ -217,6 +217,15 @@ public class Replisome_Analysis implements Command {
 			}
 			IJ.run("Tile");
 			try {
+				// If results folder does not exist, create it
+				if (!resultsFolder.exists()) {
+					if (resultsFolder.mkdir()) {
+						IJ.log("Directory is created!");
+					} else {
+						IJ.log("Failed to create directory!");
+						throw new RuntimeException("Failed to create results directory. Aborting.");
+					}
+				}
 				colonies.saveResults(Paths.get(path, "results").toString(), imageNameWithoutExtension);
 			} catch (Exception e) {
 				IJ.log("ERROR : Failed to save colonies results.");
