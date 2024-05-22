@@ -1,5 +1,8 @@
 package ch.epfl.bio410;
 
+import java.awt.*;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -29,6 +32,7 @@ import ch.epfl.bio410.tracking.Tracking;
 public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
+		private String[] fileList = new String[]{};
 		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
@@ -50,20 +54,47 @@ public class Replisome_Analysis implements Command {
 	public void run() {
 		GenericDialog dlg = new GenericDialog("Replisome Analysis");
 		dlg.addDirectoryField("Path to the image", path);
-		File directory = new File(path);
-		String[] fileList = directory.list(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.toLowerCase().endsWith(".tif");
+		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
+
+		// Get the TextField for the directory field
+		TextField directoryField = (TextField) dlg.getStringFields().lastElement();
+
+		// Get the Choice for the image choice dropdown menu
+		Choice imageChoice = (Choice) dlg.getChoices().get(0);
+
+		// Add a TextListener to the directory field
+		directoryField.addTextListener(new TextListener() {
+			@Override
+			public void textValueChanged(TextEvent e) {
+				// Update the path
+				path = directoryField.getText();
+
+				// Update the fileList with the new list of images from the updated directory
+				File directory = new File(path);
+				fileList = directory.list(new FilenameFilter() {
+					public boolean accept(File dir, String name) {
+						return name.toLowerCase().endsWith(".tif");
+					}
+				});
+
+				if (fileList == null || fileList.length == 0) {
+					fileList = new String[]{};
+					IJ.log("No images found in folder " + path + ", please enter the path to the folder with images");
+				}
+
+				// Update the Choice for the image choice dropdown menu with the updated fileList
+				imageChoice.removeAll();
+				for (String file : fileList) {
+					imageChoice.add(file);
+				}
 			}
 		});
+		// When created, check if there are images in the folder
+		directoryField.dispatchEvent(new TextEvent(directoryField, TextEvent.TEXT_VALUE_CHANGED));
 
-		if (fileList == null || fileList.length == 0) {
-			fileList = new String[]{};
-			IJ.log("No images found in folder " + path + ", please enter the path to the folder with images");
-		}
 		///////////// DIALOG /////////////
 		// Image choice
-		dlg.addChoice("Image", fileList, fileList.length > 0 ? fileList[0] : "");
+
 		dlg.addMessage("__________________________");
 		// Choose what to run
 		dlg.addCheckbox("Run colony detection on DIC channel", runColonies);
