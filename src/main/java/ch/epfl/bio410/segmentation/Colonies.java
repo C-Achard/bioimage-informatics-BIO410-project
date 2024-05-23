@@ -9,6 +9,7 @@ import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
+import org.apache.commons.csv.CSVRecord;
 
 import java.nio.file.FileSystems;
 import java.util.*;
@@ -39,55 +40,6 @@ public class Colonies {
         this.clij2 = CLIJ2.getInstance();
         this.imageDIC = imageDIC;
         setColumnMapping();
-    }
-
-    /**
-     * This method assigns labels to tracks based on the position of the colonies in the first frame.
-     * Assign each track to a colony label (unique color).
-     * First 4 lines of tracks are text, feature names
-     * Also checks label != 0 and assigns to closest ,on zero label if it is.
-     * @param tracks List of tracks from the tracking CSV file
-     * @param stack ImageStack object containing the image stack
-     */
-    public static void assignTracksToColonies(List<List<String>> tracks , ImageStack stack){
-        int[] labelsArray = new int[tracks.size()-4];
-        int index = 0;
-        for (List<String> track : tracks.subList(4, tracks.size())) { //should iterate 374 times (test with counter)
-            int frame = (int)Double.parseDouble(track.get(10)); //for each track get start_frame
-            double x_micron = Double.parseDouble(track.get(13));
-            double y_micron = Double.parseDouble(track.get(14));
-            double MICRON_2_PIXEL_CONVERTER = 9.6921;  // for merged 1&2&3?
-            int x_pixel = (int) (x_micron*MICRON_2_PIXEL_CONVERTER);
-            int y_pixel = (int) (y_micron*MICRON_2_PIXEL_CONVERTER);
-
-            // get the label of the colony at the position of the track
-            ImageProcessor ip = stack.getProcessor(frame+1); // frame 0 in csv but frames start at 1 in imageJ
-            int label = ip.getPixel(x_pixel, y_pixel);
-            // if the label is 0, get the label of the closest non-zero pixel
-            if (label == 0) {
-                label = getClosestNonZeroLabel(ip, x_pixel, y_pixel);
-            }
-            labelsArray[index] = label;
-            index++;
-        }
-        IJ.log("Labels array : " + Arrays.toString(labelsArray) + " of length " + labelsArray.length);
-    }
-
-
-    // write description for this function
-    public static int getClosestNonZeroLabel(ImageProcessor ip, int x, int y) {
-        for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-                // skip the center pixel
-                if (i == 0 && j == 0) continue;
-                // get the label of the neighboring pixel
-                int label = ip.getPixel(x + i, y + j);
-                // if the label is non-zero, return it
-                if (label != 0) return label;
-            }
-        }
-        // If no non-zero label was found within the 3 pixel neighborhood, return 0
-        return 0;
     }
 
 
@@ -228,7 +180,11 @@ public class Colonies {
     this.colonyLabels = new ImagePlus("Colony labels", processedStack);
     // Set Glasbey LUT
     this.colonyLabels.setLut(this.glasbeyLUT);
-    if (keepVoronoi) {
+    // save pixel width "metadata" to ColonyLabels image too
+    this.colonyLabels.getCalibration().setXUnit("µm");
+    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width=0.1031757 pixel_height=0.1031757 voxel_depth=1.0");
+
+        if (keepVoronoi) {
         this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);
         this.voronoiDiagramStack = null;
         this.voronoiDiagrams.setLut(this.glasbeyLUT);
@@ -382,7 +338,72 @@ public class Colonies {
         clij2.release(input);
         clij2.release(destination);
         return destinationImagePlus;
-        }
     }
+
+
+    /**
+     * This method assigns labels to tracks based on the position of the colonies in the first frame.
+     * Assign each track to a colony label (unique color).
+     * First 4 lines of tracks are text, feature names
+     * Also checks label != 0 and assigns to closest ,on zero label if it is.
+     * @param tracks List of tracks from the tracking CSV file
+     * @param colonyLabels ImagePlus object containing the image with colony labels
+     */
+    public static void assignTracksToColonies(
+            List<CSVRecord> tracks , ImagePlus colonyLabels){
+        ImageStack stack = colonyLabels.getImageStack();
+        int[] labelsArray = new int[tracks.size()];
+        int index = 0;
+        for (CSVRecord track : tracks) {
+            int frame = (int)Double.parseDouble(track.get("TRACK_START")); //for each track get start_frame
+            int x_micron = (int)Double.parseDouble(track.get("TRACK_X_LOCATION"));
+            int y_micron = (int)Double.parseDouble(track.get("TRACK_Y_LOCATION"));
+
+            // get the pixel size in microns
+            double pixelWidth = colonyLabels.getCalibration().pixelWidth;
+            double pixelHeight = colonyLabels.getCalibration().pixelHeight;
+            // convert the micron coordinates to pixel coordinates
+            int x_pixel = (int) (x_micron / pixelWidth);
+            int y_pixel = (int) (y_micron / pixelHeight);
+            IJ.log("Track at frame " + frame + " at position (" + x_pixel + ", " + y_pixel + ")");
+
+            // get the label of the colony at the position of the track
+            ImageProcessor ip = stack.getProcessor(frame+1); // frame 0 in csv but frames start at 1 in imageJ
+            int label = ip.getPixel(x_pixel, y_pixel); // getInterpolatedPixel
+            // if the label is 0, get the label of the closest non-zero pixel
+            if (label == 0) {
+                label = getClosestNonZeroLabel(ip, x_micron, y_micron);
+            }
+            labelsArray[index] = label;
+            index++;
+        }
+        IJ.log("Labels array : " + Arrays.toString(labelsArray) + " of length " + labelsArray.length);
+    }
+
+
+    /**
+     * When the label zero is assigned, this function finds closest non-zero colony label and returns it
+     * @param ip ImageProcessor of the image
+     * @param x track position x
+     * @param y track position y
+     * @return non-zero label of the closest colony
+     */
+    public static int getClosestNonZeroLabel(ImageProcessor ip, int x, int y) {
+        for (int i = -2; i <= 2; i++) {
+            for (int j = -2; j <= 2; j++) {
+                // skip the center pixel
+                if (i == 0 && j == 0) continue;
+                // get the label of the neighboring pixel
+                int label = ip.getPixel(x + i, y + j);
+                // if the label is non-zero, return it
+                if (label != 0) return label;
+            }
+        }
+        // If no non-zero label was found within the 3 pixel neighborhood, return 0
+        return 0;
+    }
+
+
+}
 
 

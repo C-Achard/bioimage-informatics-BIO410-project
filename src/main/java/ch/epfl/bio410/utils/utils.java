@@ -19,6 +19,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import java.io.File;
 
 /**
  * This class implements utils functions
@@ -103,6 +109,19 @@ public class utils {
             throw new RuntimeException(e);
         }
         return records;
+    }
+
+    public static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
+        try (FileReader reader = new FileReader(csvFilePath);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+        }
+    }
+    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
+        try (FileReader reader = new FileReader(csvFile);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+        }
     }
 
 

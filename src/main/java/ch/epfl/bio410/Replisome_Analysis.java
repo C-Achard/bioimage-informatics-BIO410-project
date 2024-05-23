@@ -19,6 +19,7 @@ import ij.gui.GenericDialog;
 
 import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
+import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
@@ -31,6 +32,7 @@ import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.tracking.Tracking;
 
 import static ch.epfl.bio410.segmentation.Colonies.assignTracksToColonies;
+import static ch.epfl.bio410.utils.utils.readCsv;
 import static org.apache.commons.collections4.IteratorUtils.indexOf;
 
 
@@ -188,6 +190,8 @@ public class Replisome_Analysis implements Command {
 		// create "results" folder if it doesn't exist
 		File resultsFolder = Paths.get(path, "results").toFile();
 
+
+
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
@@ -219,6 +223,17 @@ public class Replisome_Analysis implements Command {
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
 			colonies.colonyLabels.show();
+
+			// assigns a colony label to each track
+			List<CSVRecord> tracks = null;
+			try {
+				tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
+				assignTracksToColonies(tracks, colonies.colonyLabels);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+
 			if (showColonyVoronoi) {
 				colonies.voronoiDiagrams.show();
 			}
@@ -238,12 +253,6 @@ public class Replisome_Analysis implements Command {
 				IJ.log("ERROR : Failed to save colonies results.");
 				throw new RuntimeException(e);
 			}
-
-			List<List<String>> tracks = utils.read_csv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
-			ImagePlus labels = IJ.openImage(path+ "results/" + imageNameWithoutExtension + "_colony_labels.tif");
-			ImageStack stack = labels.getImageStack();
-			// assigns a colony label to each track
-			assignTracksToColonies(tracks, stack);
 
 		}
 
