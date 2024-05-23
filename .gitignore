@@ -47,3 +47,6 @@ DATA/**/*.png
 *.pdf
 *.csv
 !DATA/results/*.csv
+
+# docs
+site/

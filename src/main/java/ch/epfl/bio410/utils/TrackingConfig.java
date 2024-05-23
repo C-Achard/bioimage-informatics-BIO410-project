@@ -1,4 +1,4 @@
-package ch.epfl.bio410.tracking;
+package ch.epfl.bio410.utils;
 
 import ij.IJ;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class TrackingConfig {
+    public int colony_min_area;
     public double detector_radius;
     public double detector_threshold;
     public boolean detector_median_filter;
@@ -22,7 +23,43 @@ public class TrackingConfig {
 
     public String configPath = null;
     public String configName = null;
+
+    // Default constructor
+    /**
+     * Default constructor for TrackingConfig.
+     * Parameters are set to default values :
+     * - colony_min_area = 50
+     * - detector_radius = 0.31
+     * - detector_threshold = 30.0
+     * - detector_median_filter = true
+     * - tracker_linking_max_distance = 1.0
+     * - tracker_gap_closing_max_distance = 1.0
+     * - tracker_max_frame_gap = 4
+     * - track_duration_min = 8.0
+     */
+    public TrackingConfig() {
+        this.colony_min_area = 50;
+        this.detector_radius = 0.31d;
+        this.detector_threshold = 30.0d;
+        this.detector_median_filter = true;
+        this.tracker_linking_max_distance = 1.0d;
+        this.tracker_gap_closing_max_distance = 1.0d;
+        this.tracker_max_frame_gap = 4;
+        this.track_duration_min = 8.0d;
+    }
+    /**
+     * Constructor for TrackingConfig.
+     * @param colony_min_area Minimum area of a colony in pixels.
+     * @param detector_radius Radius of the object in um.
+     * @param detector_threshold Quality threshold.
+     * @param detector_median_filter Median filter.
+     * @param tracker_linking_max_distance Max linking distance between objects.
+     * @param tracker_gap_closing_max_distance Max gap distance to close a track across frames.
+     * @param tracker_max_frame_gap Max frame gap allowed for tracking.
+     * @param track_duration_min Duration filter (min duration of a track).
+     */
     public TrackingConfig(
+            int colony_min_area,
             double detector_radius,
             double detector_threshold,
             boolean detector_median_filter,
@@ -31,6 +68,7 @@ public class TrackingConfig {
             int tracker_max_frame_gap,
             double track_duration_min
     ) {
+        this.colony_min_area = colony_min_area;
         this.detector_radius = detector_radius;
         this.detector_threshold = detector_threshold;
         this.detector_median_filter = detector_median_filter;
@@ -46,7 +84,7 @@ public class TrackingConfig {
      */
     public static TrackingConfig createFromPropertiesFile(String filename) {
         String config_path = accessConfigPathFromResources(filename);
-        TrackingConfig config = new TrackingConfig(0, 0, false, 0, 0, 0, 0);
+        TrackingConfig config = new TrackingConfig(0, 0, 0, false, 0, 0, 0, 0);
         if (config_path != null) {
             config.loadFromPropertiesFile(config_path);
         }
@@ -54,21 +92,48 @@ public class TrackingConfig {
         config.configPath = config_path;
         return config;
     }
+    /**
+     * Print the tracking configuration parameters.
+     */
+    public void printTrackingConfig() {
+        printFullConfig(true, false);
+    }
+    /**
+     * Print the full configuration parameters.
+     */
+    public void printFullConfig() {
+        printFullConfig(true, true);
+    }
+    /**
+     * Print the colony configuration parameters.
+     */
+    public void printColonyConfig() {
+        printFullConfig(false, true);
+    }
 
-    // Prints the current configuration
-    public void printConfig() {
-        IJ.log("----- Tracking config :");
+    /**
+     * Print the tracking configuration parameters.
+     * @param showTrackingParams Show tracking parameters.
+     * @param showColonyParams Show colony parameters.
+     */
+    private void printFullConfig(boolean showTrackingParams, boolean showColonyParams) {
+        IJ.log("----- Config :");
         if (this.configPath != null) {
             IJ.log("Config loaded from " + this.configName);
         }
-        IJ.log("- Detector radius : " + this.detector_radius + "um");
-        IJ.log("- Detector quality threshold : " + this.detector_threshold + "um");
-        IJ.log("- Detector using median filter : " + this.detector_median_filter);
-        IJ.log("- Tracker max distance for linking : " + this.tracker_linking_max_distance + "um");
-        IJ.log("- Tracker gap closing max distance : " + this.tracker_gap_closing_max_distance + "um");
-        IJ.log("- Tracker max frame gap for closing : " + this.tracker_max_frame_gap);
-        IJ.log("- Track minimum duration filter : " + this.track_duration_min + "frames");
-        IJ.log("----- End of tracking config");
+        if (showColonyParams) {
+            IJ.log("- Colony minimum area : " + this.colony_min_area + " pixels");
+        }
+        if (showTrackingParams) {
+            IJ.log("- Detector radius : " + this.detector_radius + "um");
+            IJ.log("- Detector quality threshold : " + this.detector_threshold + "um");
+            IJ.log("- Detector using median filter : " + this.detector_median_filter);
+            IJ.log("- Tracker max distance for linking : " + this.tracker_linking_max_distance + "um");
+            IJ.log("- Tracker gap closing max distance : " + this.tracker_gap_closing_max_distance + "um");
+            IJ.log("- Tracker max frame gap for closing : " + this.tracker_max_frame_gap);
+            IJ.log("- Track minimum duration filter : " + this.track_duration_min + "frames");
+        }
+        IJ.log("----- End of config");
     }
 
     /**
@@ -122,6 +187,7 @@ public class TrackingConfig {
             Properties properties = new Properties();
             properties.load(Files.newInputStream(Paths.get(filePath)));
 
+            this.colony_min_area = Integer.parseInt(properties.getProperty("COLONY_MIN_AREA"));
             this.detector_radius = Double.parseDouble(properties.getProperty("DETECTOR_RADIUS"));
             this.detector_threshold = Double.parseDouble(properties.getProperty("DETECTOR_THRESHOLD"));
             this.detector_median_filter = Boolean.parseBoolean(properties.getProperty("DETECTOR_MEDIAN_FILTER"));
