@@ -33,15 +33,6 @@ import java.io.File;
 
 public class utils {
 
-    public static String getFolderPathInResources(String folderName) {
-        InputStream input = utils.class.getClassLoader().getResourceAsStream(folderName);
-        if (input == null) {
-            IJ.log("Failed to load folder " + folderName);
-            return null;
-        }
-        return Paths.get(input.toString()).toString();
-    }
-
     public static LUT getGlasbeyLUT() {
         InputStream lutStream = utils.class.getClassLoader().getResourceAsStream("glasbey.lut");
         IndexColorModel glasbeyLut = null;

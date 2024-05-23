@@ -112,7 +112,7 @@ public class TrackingConfig {
     public static String copyFromResources(String pathInResources) {
         try {
         return ResourcesFolder.copyFileFromResources(pathInResources).getAbsolutePath();
-    } catch (Exception e) {
+    } catch (NullPointerException e) {
         e.printStackTrace();
         return null;
         }

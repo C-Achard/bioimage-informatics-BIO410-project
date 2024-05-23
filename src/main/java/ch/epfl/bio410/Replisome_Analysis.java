@@ -40,7 +40,6 @@ public class Replisome_Analysis implements Command {
 		private boolean isConfigAvailable = false;
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
 		private String[] fileList = new String[]{};
-		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
 		private final boolean runAnalysis = true;
@@ -126,8 +125,13 @@ public class Replisome_Analysis implements Command {
 			// try to load by copying the file to Downloads
 			List<String> configList = Arrays.asList("configs/Merged1_config.properties", "configs/Merged2_config.properties", "configs/Merged3_config.properties");
 			List<String> copiedFiles = new ArrayList<>();
+			String copiedFile;
 			for (String config : configList) {
-				String copiedFile = TrackingConfig.copyFromResources(config);
+				try {
+					copiedFile = TrackingConfig.copyFromResources(config);
+				} catch (NullPointerException e2) {
+					copiedFile = null;
+				}
 				if (copiedFile != null) {
 					copiedFiles.add(copiedFile);
 				}
