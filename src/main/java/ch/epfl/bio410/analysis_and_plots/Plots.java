@@ -23,6 +23,8 @@ import javax.imageio.ImageIO;
 // import javax.imageio.spi.IIORegistry;
 // import javax.imageio.spi.ImageWriterSpi;
 import javax.swing.*;
+
+import static ij.IJ.openImage;
 // import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
 public class Plots {
@@ -57,22 +59,12 @@ public class Plots {
         try {
             List<CSVRecord> dataRows = readCsv(csvFilePath);
             Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
-//            for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-//                Integer trackId = entry.getKey();
-//                List<CSVRecord> rows = entry.getValue();
-//                JPanel chartPanel = createChartPanel(trackId, rows);
-//                saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
-//            }
-            // Test : for the first 5 tracks, plot the POSITION_X vs POSITION_Y
-            JPanel chartPanelTracks = plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
-            JPanel chartPanelPos = plotFeatures(1, groupedData.get(1), "POSITION_X", "POSITION_Y");
-            // Show in ImageJ
-            displayChartAsImagePlus(chartPanelPos);
-            displayChartAsImagePlus(chartPanelTracks);
-            // Save the chart panels as PNG files
-            saveChartPanelAsPNG(chartPanelTracks, outputDirectory + File.separator + "plot_tracks");
-            saveChartPanelAsPNG(chartPanelPos, outputDirectory + File.separator + "plot_pos");
-
+            for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+                Integer trackId = entry.getKey();
+                List<CSVRecord> rows = entry.getValue();
+                JPanel chartPanel = createChartPanel(trackId, rows);
+                saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,18 +106,24 @@ public class Plots {
         imagePlus.show();
     }
 
-    private static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
+    public static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
         try (FileReader reader = new FileReader(csvFilePath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
             return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
         }
     }
+    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
+        try (FileReader reader = new FileReader(csvFile);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+        }
+    }
 
-    private static Map<Integer, List<CSVRecord>> groupByTrackId(List<CSVRecord> dataRows) {
+    public static Map<Integer, List<CSVRecord>> groupByTrackId(List<CSVRecord> dataRows) {
         return dataRows.stream().collect(Collectors.groupingBy(row -> Integer.parseInt(row.get("TRACK_ID"))));
     }
 
-    private static JPanel createChartPanel(Integer trackId, List<CSVRecord> rows) {
+    public static JPanel createChartPanel(Integer trackId, List<CSVRecord> rows) {
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
         List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_X"))).collect(Collectors.toList());
@@ -146,6 +144,9 @@ public class Plots {
         XYSeries series2 = chart2.addSeries("Track " + trackId, timeData, intensityData);
         series2.setMarker(SeriesMarkers.NONE);
         series2.setLineStyle(SeriesLines.SOLID);
+
+//        displayChartAsImagePlus(chart1);
+//        displayChartAsImagePlus(chart2);
 
         // Combine the charts into a single panel
         JPanel chartPanel = new JPanel(new GridLayout(2, 1));
@@ -208,14 +209,15 @@ public class Plots {
         CategoryChart chart1 = new CategoryChartBuilder().width(800).height(400).title(
                 "Track IDs vs " + feature
         ).xAxisTitle("Track ID").yAxisTitle(feature).build();
-        chart1.addSeries(feature, xData, yData);
+        CategorySeries series1 = chart1.addSeries(feature, xData, yData);
+        series1.setMarker(SeriesMarkers.CIRCLE);
 
         JPanel chartPanel = new JPanel(new GridLayout(1, 1));
         chartPanel.add(new XChartPanel<>(chart1));
         return chartPanel;
     }
 
-    private static void saveChartPanelAsPNG(JPanel chartPanel, String filePath) throws IOException {
+    public static void saveChartPanelAsPNG(JPanel chartPanel, String filePath) throws IOException {
         int width = 800;
         int height = 800;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -234,5 +236,10 @@ public class Plots {
         // ImageWriter writer = writerSpi.createWriterInstance();
         // writer.setOutput(ImageIO.createImageOutputStream(new File(filePath + ".tif")));
         // writer.write(image);
+    }
+    public static ImagePlus showSavedPlot(String filePath) {
+        ImagePlus imp = openImage(filePath + ".png");
+        imp.show();
+        return imp;
     }
 }

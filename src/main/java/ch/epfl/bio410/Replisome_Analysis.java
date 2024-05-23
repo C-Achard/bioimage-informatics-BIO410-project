@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+import ch.epfl.bio410.analysis_and_plots.Analysis;
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.utils.TrackingConfig;
 import fiji.plugin.trackmate.FeatureModel;
@@ -17,15 +18,21 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 
 import net.imagej.ImageJ;
+import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.tracking.Tracking;
+import ch.epfl.bio410.analysis_and_plots.Plots;
+
+import javax.swing.*;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -36,6 +43,7 @@ public class Replisome_Analysis implements Command {
 		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
+		private final boolean plotAnalysis = true;
 		private final int colony_min_area = 50; // Colony assignment parameters, minimum colony area
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
@@ -99,6 +107,7 @@ public class Replisome_Analysis implements Command {
 		// Choose what to run
 		dlg.addCheckbox("Run colony detection on DIC channel", runColonies);
 		dlg.addCheckbox("Run tracking on GFP channel", runTracking);
+		dlg.addCheckbox("Plot analysis", plotAnalysis);
 		dlg.addMessage("__________________________");
 		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
@@ -139,6 +148,7 @@ public class Replisome_Analysis implements Command {
 		//// CHOICES OF COMPUTATION
 		boolean computeColonies = dlg.getNextBoolean();
 		boolean computeTracking = dlg.getNextBoolean();
+		boolean plotAnalysis = dlg.getNextBoolean();
 		//// CONFIG (Existing)
 		boolean useExistingConfig = dlg.getNextBoolean();
 		String configName = dlg.getNextChoice();
@@ -256,6 +266,66 @@ public class Replisome_Analysis implements Command {
 			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
 			try {
 				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		if (plotAnalysis) {
+			// Plot the analysis
+			IJ.log("------------------ ANALYSIS ------------------");
+			// Load the results
+			String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
+			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+			String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+
+			String plotSavePath = Paths.get(path, "results").toString();
+			// Create the "plots" folder and update the path
+			File plotsFolder = Paths.get(path, "results", "plots").toFile();
+			if (!plotsFolder.exists()) {
+				if (plotsFolder.mkdir()) {
+					IJ.log("Directory 'plots' is created!");
+				} else {
+					IJ.log("Failed to create directory 'plots'!");
+					throw new RuntimeException("Failed to create plots directory. Aborting.");
+				}
+			}
+			plotSavePath = Paths.get(path, "results", "plots").toString();
+			// Plot the analysis
+			try {
+			List<CSVRecord> dataRows = Plots.readCsv(csvTracksPath);
+//			List<CSVRecord> dataRows = Plots.readCsv(csvSpotsPath);
+			Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
+
+				JPanel chartPanelTracks = Plots.plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
+				JPanel chartPanelPos = Plots.plotFeatures(1, groupedData.get(1), "TRACK_X_LOCATION", "TRACK_Y_LOCATION");
+
+				// Save plots
+				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
+				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
+				// Show plots
+				Plots.showSavedPlot(plotSavePath + File.separator + "plot_tracks.png");
+				Plots.showSavedPlot(plotSavePath + File.separator + "plot_pos.png");
+
+//				for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+//					Integer trackId = entry.getKey();
+//					List<CSVRecord> rows = entry.getValue();
+//					JPanel chartPanel = Plots.createChartPanel(trackId, rows);
+////					Plots.displayChartAsImagePlus(chartPanel);
+//					String savePath = plotSavePath + File.separator + "plot_" + trackId + ".png";
+//					Plots.saveChartPanelAsPNG(chartPanel, savePath);
+//					Plots.showSavedPlot(savePath);
+//					break;
+//				}
+
+				// Show in ImageJ
+//				Plots.displayChartAsImagePlus(chartPanelPos);
+//				Plots.displayChartAsImagePlus(chartPanelTracks);
+				// Save the chart panels as PNG files
+//				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
+//				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
+
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
