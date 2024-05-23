@@ -13,19 +13,25 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 
+import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.tracking.Tracking;
+
+import static ch.epfl.bio410.segmentation.Colonies.assignTracksToColonies;
+import static org.apache.commons.collections4.IteratorUtils.indexOf;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -172,6 +178,8 @@ public class Replisome_Analysis implements Command {
 			this.config = TrackingConfig.createFromPropertiesFile(configName);
 		}
 
+
+
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
 		// Results
@@ -179,8 +187,7 @@ public class Replisome_Analysis implements Command {
 		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
 		// create "results" folder if it doesn't exist
 		File resultsFolder = Paths.get(path, "results").toFile();
-    	//pour mathilde
-    	//String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
+
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
@@ -231,7 +238,19 @@ public class Replisome_Analysis implements Command {
 				IJ.log("ERROR : Failed to save colonies results.");
 				throw new RuntimeException(e);
 			}
+
+			List<List<String>> tracks = utils.read_csv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
+			ImagePlus labels = IJ.openImage(path+ "results/" + imageNameWithoutExtension + "_colony_labels.tif");
+			ImageStack stack = labels.getImageStack();
+			// assigns a colony label to each track
+			assignTracksToColonies(tracks, stack);
+
 		}
+
+
+
+
+
 
 		if (computeTracking) {
 

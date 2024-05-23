@@ -4,15 +4,21 @@ import ij.ImagePlus;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
+import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.plugin.LutLoader;
 
 import java.awt.*;
 import java.awt.image.IndexColorModel;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class implements utils functions
@@ -84,5 +90,20 @@ public class utils {
         return dog;
 
     }
+
+    public static List<List<String>> read_csv(String path){
+        List<List<String>> records = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return records;
+    }
+
 
 }
