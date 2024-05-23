@@ -34,8 +34,12 @@ import java.io.File;
 public class utils {
 
     public static String getFolderPathInResources(String folderName) {
-        URL resourceURL = utils.class.getClassLoader().getResource(folderName);
-        return Paths.get(resourceURL.getPath()).toString();
+        InputStream input = utils.class.getClassLoader().getResourceAsStream(folderName);
+        if (input == null) {
+            IJ.log("Failed to load folder " + folderName);
+            return null;
+        }
+        return Paths.get(input.toString()).toString();
     }
 
     public static LUT getGlasbeyLUT() {

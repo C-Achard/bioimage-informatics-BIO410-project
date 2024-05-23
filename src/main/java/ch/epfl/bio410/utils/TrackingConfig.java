@@ -4,6 +4,7 @@ import ij.IJ;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -144,9 +145,9 @@ public class TrackingConfig {
     private static String accessConfigPathFromResources(String filename) {
         try {
             String path = "configs/" + filename; // system file separator is not applicable here
-            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource(path);
-            if (resourceUrl != null) {
-                String real_path = resourceUrl.getPath();
+            InputStream resourceStream = TrackingConfig.class.getClassLoader().getResourceAsStream(path);
+            if (resourceStream != null) {
+                String real_path = resourceStream.toString();
                 // if the first character of real path is "/", remove it
                 if (real_path.charAt(0) == '/') {
                     real_path = real_path.substring(1);
@@ -163,11 +164,11 @@ public class TrackingConfig {
     }
     public static List<String> listAvailableConfigs() {
         try {
-            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
-            if (resourceUrl == null) {
+            InputStream resourceStream = TrackingConfig.class.getClassLoader().getResourceAsStream("configs");
+            if (resourceStream == null) {
                 return null;
             }
-            String path = resourceUrl.getPath();
+            String path = resourceStream.toString();
             File folder = new File(path);
             File[] listOfFiles = folder.listFiles();
             List<String> files = new ArrayList<>();
