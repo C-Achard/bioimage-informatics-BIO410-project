@@ -299,33 +299,10 @@ public class Replisome_Analysis implements Command {
 			Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
 
 				JPanel chartPanelTracks = Plots.plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
-				JPanel chartPanelPos = Plots.plotFeatures(1, groupedData.get(1), "TRACK_X_LOCATION", "TRACK_Y_LOCATION");
-
 				// Save plots
 				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
-				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
 				// Show plots
 				Plots.showSavedPlot(plotSavePath + File.separator + "plot_tracks.png");
-				Plots.showSavedPlot(plotSavePath + File.separator + "plot_pos.png");
-
-//				for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-//					Integer trackId = entry.getKey();
-//					List<CSVRecord> rows = entry.getValue();
-//					JPanel chartPanel = Plots.createChartPanel(trackId, rows);
-////					Plots.displayChartAsImagePlus(chartPanel);
-//					String savePath = plotSavePath + File.separator + "plot_" + trackId + ".png";
-//					Plots.saveChartPanelAsPNG(chartPanel, savePath);
-//					Plots.showSavedPlot(savePath);
-//					break;
-//				}
-
-				// Show in ImageJ
-//				Plots.displayChartAsImagePlus(chartPanelPos);
-//				Plots.displayChartAsImagePlus(chartPanelTracks);
-				// Save the chart panels as PNG files
-//				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
-//				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
-
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

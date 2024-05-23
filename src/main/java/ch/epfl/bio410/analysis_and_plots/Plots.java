@@ -238,7 +238,7 @@ public class Plots {
         // writer.write(image);
     }
     public static ImagePlus showSavedPlot(String filePath) {
-        ImagePlus imp = openImage(filePath + ".png");
+        ImagePlus imp = openImage(filePath);
         imp.show();
         return imp;
     }
