@@ -22,6 +22,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -298,7 +299,11 @@ public class Replisome_Analysis implements Command {
 //			List<CSVRecord> dataRows = Plots.readCsv(csvSpotsPath);
 			Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
 
-				JPanel chartPanelTracks = Plots.plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
+				JPanel chartPanelTracks = Plots.plotTracksFeatures(
+                        new ArrayList<>(groupedData.keySet()),
+						dataRows,
+						"TRACK_DURATION"
+				);
 				// Save plots
 				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
 				// Show plots

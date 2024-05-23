@@ -4,6 +4,7 @@ package ch.epfl.bio410.analysis_and_plots;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import org.knowm.xchart.*;
+import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.knowm.xchart.style.lines.SeriesLines;
 import org.apache.commons.csv.CSVFormat;
@@ -132,14 +133,14 @@ public class Plots {
         List<Double> intensityData = rows.stream().map(row -> Double.parseDouble(row.get("MEDIAN_INTENSITY_CH1"))).collect(Collectors.toList());
 
         // Create the first chart (POSITION_X vs POSITION_Y)
-        XYChart chart1 = new XYChartBuilder().width(800).height(400).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
+        XYChart chart1 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
                 .xAxisTitle("POSITION_X").yAxisTitle("POSITION_Y").build();
         XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
         series1.setMarker(SeriesMarkers.NONE);
         series1.setLineStyle(SeriesLines.SOLID);
 
         // Create the second chart (POSITION_T vs MEDIAN_INTENSITY_CH1)
-        XYChart chart2 = new XYChartBuilder().width(800).height(400).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
+        XYChart chart2 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
                 .xAxisTitle("POSITION_T").yAxisTitle("MEDIAN_INTENSITY_CH1").build();
         XYSeries series2 = chart2.addSeries("Track " + trackId, timeData, intensityData);
         series2.setMarker(SeriesMarkers.NONE);
@@ -171,7 +172,7 @@ public class Plots {
         List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
 
         // Create the chart with the specified features
-        XYChart chart1 = new XYChartBuilder().width(800).height(400).title(
+        XYChart chart1 = new XYChartBuilder().width(1600).height(800).title(
                 "Track ID: " + trackId + " (" + xFeature + " vs " + yFeature + ")"
                 ).xAxisTitle(xFeature).yAxisTitle(yFeature).build();
         XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
@@ -206,23 +207,33 @@ public class Plots {
         }
 
         // Create the chart with the specified feature
-        CategoryChart chart1 = new CategoryChartBuilder().width(800).height(400).title(
+        CategoryChart chart1 = new CategoryChartBuilder().width(1600).height(800).title(
                 "Track IDs vs " + feature
         ).xAxisTitle("Track ID").yAxisTitle(feature).build();
+        chart1.getStyler().setXAxisLabelRotation(90);
+        chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
+        chart1.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Stick);
+        chart1.getStyler().setXAxisTickMarkSpacingHint(10);
+
         CategorySeries series1 = chart1.addSeries(feature, xData, yData);
         series1.setMarker(SeriesMarkers.CIRCLE);
+        // rotate the x-axis labels
 
         JPanel chartPanel = new JPanel(new GridLayout(1, 1));
         chartPanel.add(new XChartPanel<>(chart1));
         return chartPanel;
     }
-
+    /**
+     * Save the chart panel as a PNG file.
+     * @param chartPanel The chart panel to save
+     * @param filePath The path to save the PNG file
+     * @throws IOException If an error occurs while saving the file
+     */
     public static void saveChartPanelAsPNG(JPanel chartPanel, String filePath) throws IOException {
-        int width = 800;
-        int height = 800;
+        int width = (int) chartPanel.getPreferredSize().getWidth();
+        int height = (int) chartPanel.getPreferredSize().getHeight();
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
-
         // Ensure the panel is fully rendered before capturing
         chartPanel.setSize(width, height);
         chartPanel.doLayout();
