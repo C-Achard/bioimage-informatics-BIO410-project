@@ -2,9 +2,7 @@ package ch.epfl.bio410.utils;
 
 import ij.IJ;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -94,6 +92,33 @@ public class TrackingConfig {
         return config;
     }
     /**
+     * Create a TrackingConfig object from a properties file.
+     * @param filename File to load from.
+     * @return TrackingConfig object with the loaded parameters.
+     */
+    public static TrackingConfig createFromPropertiesFile(File filename) {
+        TrackingConfig config = new TrackingConfig(0, 0, 0, false, 0, 0, 0, 0);
+        if (filename != null) {
+            config.loadFromPropertiesFile(filename.getAbsolutePath());
+        }
+        config.configName = filename.getName();
+        config.configPath = filename.getAbsolutePath();
+        return config;
+    }
+    /** Backup function to be used if loading directly from resources fails.
+     * This instead copies the file to the user's Downloads folder for loading.
+     * See ResourcesFolder.java for the implementation of copyFileFromResources.
+     */
+    public static String copyFromResources(String pathInResources) {
+        try {
+        return ResourcesFolder.copyFileFromResources(pathInResources).getAbsolutePath();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return null;
+        }
+    }
+
+    /**
      * Print the tracking configuration parameters.
      */
     public void printTrackingConfig() {
@@ -145,10 +170,9 @@ public class TrackingConfig {
     private static String accessConfigPathFromResources(String filename) {
         try {
             String path = "configs/" + filename; // system file separator is not applicable here
-            InputStream resourceStream = TrackingConfig.class.getClassLoader().getResourceAsStream(path);
-            if (resourceStream != null) {
-                String real_path = resourceStream.toString();
-                // if the first character of real path is "/", remove it
+            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource(path);
+            if (resourceUrl != null) {
+                String real_path = resourceUrl.getPath();
                 if (real_path.charAt(0) == '/') {
                     real_path = real_path.substring(1);
                 }
@@ -162,13 +186,13 @@ public class TrackingConfig {
             return null;
         }
     }
-    public static List<String> listAvailableConfigs() {
+    public List<String> listAvailableConfigs() {
         try {
-            InputStream resourceStream = TrackingConfig.class.getClassLoader().getResourceAsStream("configs");
-            if (resourceStream == null) {
+            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
+            if (resourceUrl == null) {
                 return null;
             }
-            String path = resourceStream.toString();
+            String path = resourceUrl.getPath();
             File folder = new File(path);
             File[] listOfFiles = folder.listFiles();
             List<String> files = new ArrayList<>();

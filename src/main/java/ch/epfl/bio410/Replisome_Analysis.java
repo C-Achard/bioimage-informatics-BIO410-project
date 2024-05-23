@@ -22,6 +22,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 // import tracking from local package
@@ -35,6 +37,7 @@ import static ch.epfl.bio410.utils.utils.readCsv;
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
+		private boolean isConfigAvailable = false;
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
 		private String[] fileList = new String[]{};
 		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
@@ -110,12 +113,38 @@ public class Replisome_Analysis implements Command {
 		dlg.addMessage("__________________________");
 		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
-		dlg.addCheckbox("Use existing config", true);
-		List<String> configList = TrackingConfig.listAvailableConfigs();
-		if (configList.size() == 0) {
-			IJ.log("No config files found in folder " + path + ", please set the parameters");
+		try {
+			List<String> configList = new TrackingConfig().listAvailableConfigs();
+			if (configList.size() == 0) {
+				IJ.log("No config files found in folder, please set the parameters manually");
+				isConfigAvailable = false;
+			} else {
+				isConfigAvailable = true;
+			}
+			dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+		} catch (NullPointerException e) {
+			// try to load by copying the file to Downloads
+			List<String> configList = Arrays.asList("configs/Merged1_config.properties", "configs/Merged2_config.properties", "configs/Merged3_config.properties");
+			List<String> copiedFiles = new ArrayList<>();
+			for (String config : configList) {
+				String copiedFile = TrackingConfig.copyFromResources(config);
+				if (copiedFile != null) {
+					copiedFiles.add(copiedFile);
+				}
+			}
+			// Add the paths of the copied files to the list
+			if (copiedFiles.size() > 0) {
+				configList = copiedFiles;
+				isConfigAvailable = true;
+				dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+			} else {
+				IJ.log("No config files found in folder, please set the parameters manually");
+				isConfigAvailable = false;
+				// Add None as a choice
+				dlg.addChoice("Config", new String[]{"None"}, "None");
+			}
 		}
-		dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+		dlg.addCheckbox("Use existing config", isConfigAvailable);
 		//////// PARAMETERS (if not using existing config) ///////////
 //		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
@@ -149,8 +178,8 @@ public class Replisome_Analysis implements Command {
 		boolean computeTracking = dlg.getNextBoolean();
 		boolean computeAnalysis = dlg.getNextBoolean();
 		//// CONFIG (Existing)
-		boolean useExistingConfig = dlg.getNextBoolean();
 		String configName = dlg.getNextChoice();
+		boolean useExistingConfig = dlg.getNextBoolean();
 		// Colony detection parameters
 		int colony_min_area = (int) dlg.getNextNumber();
 		// Detection parameters
@@ -165,8 +194,8 @@ public class Replisome_Analysis implements Command {
 		//// DISPLAY
 		boolean showColonyVoronoi = dlg.getNextBoolean();
 
-		// Set the config if needed
-		if (!useExistingConfig) {
+		// Set the config if needed (use existing is set or no config available)
+		if (!useExistingConfig || !isConfigAvailable) {
 			this.config = new TrackingConfig(
 					colony_min_area,
 					radius,
@@ -178,7 +207,16 @@ public class Replisome_Analysis implements Command {
 					durationFilter
 			);
 		} else {
-			this.config = TrackingConfig.createFromPropertiesFile(configName);
+			// if the configName contains :, it is a path and should be loaded as such
+			// this only occurs if the config had to be copied from the resources to Downloads
+			if (configName.contains(":")) {
+				File configFile = new File(configName);
+				// we use the overloaded constructor that takes a File
+				this.config = TrackingConfig.createFromPropertiesFile(configFile);
+			} else {
+				// otherwise, we load it from the resources as String
+				this.config = TrackingConfig.createFromPropertiesFile(configName);
+			}
 		}
 
 

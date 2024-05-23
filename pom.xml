@@ -150,7 +150,7 @@
     <build>
     <resources>
         <resource>
-            <directory>src/main/resources</directory>
+            <directory>src/main/resources/configs</directory>
         </resource>
     </resources>
 </build>
