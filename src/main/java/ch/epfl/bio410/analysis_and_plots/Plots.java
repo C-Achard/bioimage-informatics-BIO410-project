@@ -1,6 +1,8 @@
 // TODO : find suitable library for plotting and implement plots
 package ch.epfl.bio410.analysis_and_plots;
 
+import ij.ImagePlus;
+import ij.gui.NewImage;
 import org.knowm.xchart.*;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.knowm.xchart.style.lines.SeriesLines;
@@ -55,15 +57,61 @@ public class Plots {
         try {
             List<CSVRecord> dataRows = readCsv(csvFilePath);
             Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
-            for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-                Integer trackId = entry.getKey();
-                List<CSVRecord> rows = entry.getValue();
-                JPanel chartPanel = createChartPanel(trackId, rows);
-                saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
-            }
+//            for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+//                Integer trackId = entry.getKey();
+//                List<CSVRecord> rows = entry.getValue();
+//                JPanel chartPanel = createChartPanel(trackId, rows);
+//                saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+//            }
+            // Test : for the first 5 tracks, plot the POSITION_X vs POSITION_Y
+            JPanel chartPanelTracks = plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
+            JPanel chartPanelPos = plotFeatures(1, groupedData.get(1), "POSITION_X", "POSITION_Y");
+            // Show in ImageJ
+            displayChartAsImagePlus(chartPanelPos);
+            displayChartAsImagePlus(chartPanelTracks);
+            // Save the chart panels as PNG files
+            saveChartPanelAsPNG(chartPanelTracks, outputDirectory + File.separator + "plot_tracks");
+            saveChartPanelAsPNG(chartPanelPos, outputDirectory + File.separator + "plot_pos");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    /**
+     * Display the chart panel as an ImagePlus window.
+     * @param chartPanel The chart panel to display
+     */
+    public static void displayChartAsImagePlus(JPanel chartPanel) {
+        // Create an ImagePlus window
+        ImagePlus imagePlus = NewImage.createRGBImage("Chart", chartPanel.getWidth(), chartPanel.getHeight(), 1, NewImage.FILL_WHITE);
+        imagePlus.show();
+
+        // Get the Graphics object of the ImagePlus
+        Graphics g = imagePlus.getProcessor().getBufferedImage().getGraphics();
+
+        // Paint the chart panel onto the ImagePlus
+        chartPanel.paint(g);
+
+        // Update the ImagePlus window
+        imagePlus.updateAndDraw();
+    }
+
+    /**
+     * Display the chart as an ImagePlus window.
+     * @param chart The chart to display
+     */
+    public static void displayChartAsImagePlus(XYChart chart) {
+        // Convert the chart to a BufferedImage
+        BufferedImage chartImage = new BufferedImage(chart.getWidth(), chart.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = chartImage.createGraphics();
+        chart.paint(g2, chart.getWidth(), chart.getHeight());
+        g2.dispose();
+
+        // Convert the BufferedImage to an ImagePlus
+        ImagePlus imagePlus = new ImagePlus("Chart", chartImage);
+
+        // Display the ImagePlus
+        imagePlus.show();
     }
 
     private static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
@@ -104,6 +152,66 @@ public class Plots {
         chartPanel.add(new XChartPanel<>(chart1));
         chartPanel.add(new XChartPanel<>(chart2));
 
+        return chartPanel;
+    }
+
+    /**
+     * Plot the specified features for a single track.
+     * @param trackId The ID of the track to plot
+     * @param rows List of CSV records containing the data (sorted by frame)
+     * @param xFeature The feature to plot on the x-axis
+     * @param yFeature The feature to plot on the y-axis
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotFeatures(Integer trackId , List<CSVRecord> rows, String xFeature, String yFeature) {
+        rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
+
+        List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get(xFeature))).collect(Collectors.toList());
+        List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
+
+        // Create the chart with the specified features
+        XYChart chart1 = new XYChartBuilder().width(800).height(400).title(
+                "Track ID: " + trackId + " (" + xFeature + " vs " + yFeature + ")"
+                ).xAxisTitle(xFeature).yAxisTitle(yFeature).build();
+        XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
+        series1.setMarker(SeriesMarkers.NONE);
+        series1.setLineStyle(SeriesLines.SOLID);
+
+        // Combine the charts into a single panel
+        JPanel chartPanel = new JPanel(new GridLayout(1, 1));
+        chartPanel.add(new XChartPanel<>(chart1));
+        return chartPanel;
+    }
+
+    /**
+     * Plot the specified feature for each track in the list of track IDs.
+     * @param trackIds List of track IDs to plot
+     * @param rows List of CSV records containing the data (sorted by track ID)
+     * @param feature The feature to plot (see the CSV header for available features)
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotTracksFeatures(List<Integer> trackIds, List<CSVRecord> rows, String feature) {
+        // Plot the feature for each track (track id is x, feature is y)
+        // Use CategoryChart for discrete x-axis values
+        Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(rows);
+        List<Double> xData = new ArrayList<>();
+        List<Double> yData = new ArrayList<>();
+        for (Integer trackId : trackIds) {
+            List<CSVRecord> trackData = groupedData.get(trackId);
+            if (trackData != null) {
+                xData.add((double) trackId);
+                yData.add(Double.parseDouble(trackData.get(0).get(feature)));
+            }
+        }
+
+        // Create the chart with the specified feature
+        CategoryChart chart1 = new CategoryChartBuilder().width(800).height(400).title(
+                "Track IDs vs " + feature
+        ).xAxisTitle("Track ID").yAxisTitle(feature).build();
+        chart1.addSeries(feature, xData, yData);
+
+        JPanel chartPanel = new JPanel(new GridLayout(1, 1));
+        chartPanel.add(new XChartPanel<>(chart1));
         return chartPanel;
     }
 
