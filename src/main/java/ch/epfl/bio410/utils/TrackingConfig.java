@@ -113,7 +113,6 @@ public class TrackingConfig {
         try {
         return ResourcesFolder.copyFileFromResources(pathInResources).getAbsolutePath();
     } catch (NullPointerException e) {
-        e.printStackTrace();
         return null;
         }
     }
@@ -173,6 +172,7 @@ public class TrackingConfig {
             URL resourceUrl = TrackingConfig.class.getClassLoader().getResource(path);
             if (resourceUrl != null) {
                 String real_path = resourceUrl.getPath();
+                // if the path starts with a '/', remove it
                 if (real_path.charAt(0) == '/') {
                     real_path = real_path.substring(1);
                 }
@@ -186,7 +186,7 @@ public class TrackingConfig {
             return null;
         }
     }
-    public List<String> listAvailableConfigs() {
+    public static List<String> listAvailableConfigs() {
         try {
             URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
             if (resourceUrl == null) {
