@@ -1,8 +1,15 @@
 // TODO : find suitable library for plotting and implement plots
 package ch.epfl.bio410.analysis_and_plots;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 import ij.ImagePlus;
 import ij.gui.NewImage;
+// import io.scif.DefaultParser;
+// import net.imagej.updater.CommandLine;
+
 import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
@@ -28,24 +35,35 @@ import javax.swing.*;
 import static ij.IJ.openImage;
 // import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
-public class Plots {
+@Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
+        description = "Processes a CSV file and generates plots.")
+public class Plots implements Runnable {
+
+    @Parameters(index = "0", description = "Path to the CSV file")
+    private String csvFilePath;
+
+    @Option(names = {"-o", "--output"}, description = "Output directory for the plots")
+    private String outputDirectory;
+
+    @Option(names = {"-h", "--hist"}, description = "Column name for the histogram")
+    private String histColumn;
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Please provide the path to the CSV file.");
-            return;
-        }
+        int exitCode = new CommandLine(new Plots()).execute(args);
+        System.exit(exitCode);
+    }
 
-        String csvFilePath = args[0];
-        String outputDirectory;
-
-        if (args.length >= 2) {
-            outputDirectory = args[1];
-        } else {
+    @Override
+    public void run() {
+        if (outputDirectory == null) {
             File csvFile = new File(csvFilePath);
             String baseName = csvFile.getName().substring(0, csvFile.getName().lastIndexOf('.'));
             outputDirectory = csvFile.getParent() + File.separator + baseName;
         }
+
+        System.out.println("CSV File Path: " + csvFilePath);
+        System.out.println("Output Directory: " + outputDirectory);
+        System.out.println("Histogram Column: " + (histColumn != null ? histColumn : "Not Provided"));
 
         // Create the output directory if it doesn't exist
         File outputDir = new File(outputDirectory);
@@ -59,12 +77,16 @@ public class Plots {
 
         try {
             List<CSVRecord> dataRows = readCsv(csvFilePath);
-            Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
-            for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-                Integer trackId = entry.getKey();
-                List<CSVRecord> rows = entry.getValue();
-                JPanel chartPanel = createChartPanel(trackId, rows);
-                saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+            if (histColumn != null) {
+                createAndSaveHistogram(dataRows, histColumn, outputDirectory + File.separator + "hist_" + histColumn);
+            } else {
+                Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
+                for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+                    Integer trackId = entry.getKey();
+                    List<CSVRecord> rows = entry.getValue();
+                    JPanel chartPanel = createChartPanel(trackId, rows);
+                    saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -136,6 +158,7 @@ public class Plots {
         XYChart chart1 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
                 .xAxisTitle("POSITION_X").yAxisTitle("POSITION_Y").build();
         XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
+        chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         series1.setMarker(SeriesMarkers.NONE);
         series1.setLineStyle(SeriesLines.SOLID);
 
@@ -143,6 +166,7 @@ public class Plots {
         XYChart chart2 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
                 .xAxisTitle("POSITION_T").yAxisTitle("MEDIAN_INTENSITY_CH1").build();
         XYSeries series2 = chart2.addSeries("Track " + trackId, timeData, intensityData);
+        chart2.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         series2.setMarker(SeriesMarkers.NONE);
         series2.setLineStyle(SeriesLines.SOLID);
 
@@ -252,5 +276,58 @@ public class Plots {
         ImagePlus imp = openImage(filePath);
         imp.show();
         return imp;
+    }
+
+    public static void createAndSaveHistogram(List<CSVRecord> dataRows, String column, String filePath) throws IOException {
+        double[] values = dataRows.stream().mapToDouble(row -> Double.parseDouble(row.get(column))).toArray();
+
+        Histogram histogram = new Histogram(values, 50);
+
+        // Create the histogram chart
+        CategoryChart chart = new CategoryChartBuilder().width(1610).height(1000).title("Histogram of " + column)
+                .xAxisTitle(column).yAxisTitle("Frequency").build();
+        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
+        chart.getStyler().setXAxisLabelRotation(90);
+        chart.addSeries(column, histogram.getx(), Arrays.stream(histogram.gety()).asDoubleStream().toArray());
+
+        // Save the chart as a TIFF file
+        BufferedImage image = new BufferedImage(chart.getWidth(), chart.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image.createGraphics();
+        chart.paint(g2, 1610, 1000);
+        g2.dispose();
+        ImageIO.write(image, "png", new File(filePath + ".png"));
+    }
+
+    static class Histogram {
+        private final double[] xAxisData;
+        private final int[] yAxisData;
+
+        public Histogram(double[] values, int numBins) {
+            double min = Arrays.stream(values).min().getAsDouble();
+            double max = Arrays.stream(values).max().getAsDouble();
+            double binWidth = max != min ? (max - min) / numBins : 1 / numBins;
+
+            xAxisData = new double[numBins];
+            yAxisData = new int[numBins];
+
+            for (int i = 0; i < numBins; i++) {
+                xAxisData[i] = min + i * binWidth;
+            }
+
+            for (double value : values) {
+                int bin = (int) ((value - min) / binWidth);
+                if (bin >= 0 && bin < numBins) {
+                    yAxisData[bin]++;
+                }
+            }
+        }
+
+        public double[] getx() {
+            return xAxisData;
+        }
+
+        public int[] gety() {
+            return yAxisData;
+        }
     }
 }
