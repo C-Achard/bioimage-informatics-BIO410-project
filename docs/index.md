@@ -1,8 +1,8 @@
 # Replisome Analysis : ImageJ plugin for the analysis of DNA replication dynamics in bacteria
 
-## Welcome to the Replisome Analysis Plugin
+## Welcome to the Replisome Analysis Plugin :material-hand-wave:
 
-:material-hand-wave: This ImageJ plugin is intended to provide an automated analysis of DNA replication dynamics in bacteria.
+This ImageJ plugin is intended to provide an automated analysis of DNA replication dynamics in bacteria.
 
 ## Intended Use
 

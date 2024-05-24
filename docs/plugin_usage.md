@@ -1,6 +1,8 @@
 # Plugin usage
 
-:material-cog: This page provides information on how to use the Replisome Analysis plugin, namely available parameters and display options. 
+:material-cog: This page provides information on how to use the Replisome Analysis plugin :material-cog:
+
+Here you will find information about running the plugin, available parameters and display options. 
 
 ## Launching the plugin
 
@@ -35,6 +37,7 @@ You can run both or only one of these workflows by checking the boxes in the `Ru
 For default images, some configurations are already available, these will be used if you check the relevant box.
 
 You may then select one of these configurations from the dropdown menu.
+If no valid configuration is available, the plugin will use the values specified in the interface, and "None" will be displayed in the menu.
 
 !!! warning
     **KNOWN ISSUE** The configuration files are stored in the resources of the jar file.
@@ -57,15 +60,24 @@ Default configurations are available for :
 
 If you wish to specify your own configuration, or no configuration is available, simply uncheck the box and fill in the fields as required.
 
+!!! note
+    If no valid configuration is available, the plugin will always use the values specified in the interface.
+
 #### Colony detection
+
+The plugin uses classical image processing techniques to detect the bacteria and assign them to colonies;
+the analysis is GPU-accelerated using [clij2](https://clij.github.io/).
 
 - **Minimum colony area** : The minimum area of a colony in pixels.
   All colonies with an area below this value will be discarded.
 
-
 #### Tracking replisomes
 
 This plugin uses [TrackMate](https://imagej.net/plugins/trackmate/) as a backend for tracking the replisomes.
+
+Here, we use a Laplacian of Gaussian (LoG) detector to detect the spots in the GFP channel, and a sparse LAP to link the spots over time.
+
+See [this page](https://imagej.net/plugins/trackmate/trackers/lap-trackers) for more information on the LAP tracker.
 
 - **Radius** : the mean radius of the replisome in microns. Used by TrackMate to detect spots.
 - **Quality threshold** : the minimum quality of the spots. Spots with a quality below this threshold will be discarded;
