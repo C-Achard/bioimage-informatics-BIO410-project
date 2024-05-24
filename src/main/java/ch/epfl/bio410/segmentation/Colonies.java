@@ -9,8 +9,17 @@ import ij.process.LUT;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
+
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -28,7 +37,7 @@ public class Colonies {
     public Map<Integer, double[][]> colonyStats = new HashMap<>(); // holds the statistics for each frame
     private CLIJ2 clij2; // the CLIJ2 instance used for image processing
     private final LUT glasbeyLUT = utils.getGlasbeyLUT();
-    private final Map<String, Integer> columnMapping = new HashMap<>();
+    public final Map<String, Integer> columnMapping = new HashMap<>();
 
     /**
      * Constructor for Colonies.
@@ -347,13 +356,12 @@ public class Colonies {
     /**
      * This method assigns labels to tracks based on the position of the colonies in the first frame.
      * Assign each track to a colony label (unique color).
-     * First 4 lines of tracks are text, feature names
      * Also checks label != 0 and assigns to closest ,on zero label if it is.
      * @param tracks List of tracks from the tracking CSV file
      * @param colonyLabels ImagePlus object containing the image with colony labels
      */
     public static void assignTracksToColonies(
-            List<CSVRecord> tracks , ImagePlus colonyLabels){
+            List<CSVRecord> tracks , ImagePlus colonyLabels, String imageNameWithoutExtension){
         ImageStack stack = colonyLabels.getImageStack();
         int[] labelsArray = new int[tracks.size()];
         int index = 0;
@@ -379,7 +387,37 @@ public class Colonies {
             labelsArray[index] = label;
             index++;
         }
-        IJ.log("Labels array : " + Arrays.toString(labelsArray) + " of length " + labelsArray.length);
+
+        // add labelsarray as new feature of tracks
+        // and save to new csv in results folder
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString()));
+            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT);
+
+            // Write header
+            List<String> header = new ArrayList<>();
+            for (String head : tracks.get(0).toMap().keySet()) {
+                header.add(head);
+            }
+            header.add("COLONY_LABEL");
+            csvPrinter.printRecord(header);
+
+            // Write records
+            for (int i = 0; i < tracks.size(); i++) {
+                CSVRecord record = tracks.get(i);
+                List<String> newRecord = new ArrayList<>();
+                for (String value : record) {
+                    newRecord.add(value);
+                }
+                newRecord.add(String.valueOf(labelsArray[i]));
+                csvPrinter.printRecord(newRecord);
+            }
+
+            csvPrinter.flush();
+            csvPrinter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -408,22 +446,39 @@ public class Colonies {
 
 
 
-    public List<double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracks, ImagePlus labels, ImagePlus DICFrame) {
+    public List<double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracks, ImagePlus labels, ImagePlus imageDIC) {
         List<double[][]> colonyFeatures = new ArrayList<>();
-        int label = (int)Double.parseDouble(tracks.get("TrackID").get("TRACK_START"));
         for (CSVRecord track : tracks) {
             if (track.get("TRACK_ID").equals(track_ID)) {
                 int start_frame = (int)Double.parseDouble(track.get("TRACK_START"));
-                int end_frame = (int)Double.parseDouble(track.get("TRACK_END"));
+                int end_frame = (int)Double.parseDouble(track.get("TRACK_STOP"));
                 for(int i = start_frame; i <= end_frame; i++){
                     // Get the label statistics for the colony in the current frame
-                    double[][] stats = getLabelStats(labels, DICFrame);
+                    ImageProcessor ip_labels = labels.getImageStack().getProcessor(i+1); // get frame i of labels
+                    ImagePlus label = new ImagePlus("Frame", ip_labels.duplicate()); //get imageplus of frame i
+                    ImageProcessor ip_DIC = imageDIC.getImageStack().getProcessor(i+1); // get frame i of dic
+                    ImagePlus DICframe = new ImagePlus("Frame", ip_DIC.duplicate()); //get imageplus of frame i for dic too
+                    double[][] stats = getLabelStats(label, DICframe);
                     colonyFeatures.add(stats);
                 }
             }
         }
         return colonyFeatures;
     }
+
+
+    public int getLabel(String track_ID, List<CSVRecord> tracks_with_labels) {
+        for (CSVRecord track_with_label : tracks_with_labels) {
+             if (track_with_label.get("TRACK_ID").equals(track_ID)) {
+                return (int)Double.parseDouble(track_with_label.get("COLONY_LABEL"));
+            }
+        }
+        return -1;
+    }
+
+
+
+
 
 
 }

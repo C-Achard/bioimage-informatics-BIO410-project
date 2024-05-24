@@ -111,10 +111,10 @@ public class utils {
         return records;
     }
 
-    public static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
+    public static List<CSVRecord> readCsv(String csvFilePath, int skipped_lines) throws IOException {
         try (FileReader reader = new FileReader(csvFilePath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+            return csvParser.getRecords().stream().skip(skipped_lines).collect(Collectors.toList());
         }
     }
     public static List<CSVRecord> readCsv(File csvFile) throws IOException {

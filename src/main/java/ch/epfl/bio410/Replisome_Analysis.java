@@ -13,17 +13,14 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 
-import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
 import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 // import tracking from local package
@@ -33,8 +30,6 @@ import ch.epfl.bio410.tracking.Tracking;
 
 import static ch.epfl.bio410.segmentation.Colonies.assignTracksToColonies;
 import static ch.epfl.bio410.utils.utils.readCsv;
-import static ch.epfl.bio410.utils.utils.read_csv;
-import static org.apache.commons.collections4.IteratorUtils.indexOf;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -206,6 +201,8 @@ public class Replisome_Analysis implements Command {
 		// Tile
 		IJ.run("Tile");
 
+
+
 		if (computeColonies) {
 			IJ.log("------------------ COLONIES ------------------");
 			// Print the configuration
@@ -226,17 +223,40 @@ public class Replisome_Analysis implements Command {
 			colonies.colonyLabels.show();
 
 
-			//List<List<String>> tracks = read_csv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
-			//assignTracksToColonies(tracks, colonies.colonyLabels);
 
-			// assigns a colony label to each track
+
+
+			// Assigns a colony label to each track
 			List<CSVRecord> tracks = null;
 			try {
-				tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
-				assignTracksToColonies(tracks, colonies.colonyLabels);
+				tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+				assignTracksToColonies(tracks, colonies.colonyLabels, imageNameWithoutExtension);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+
+			// Get features for a track
+			List<CSVRecord>  tracks_with_labels = null;
+			try {
+				tracks_with_labels = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			String track_ID = "2";
+			List<double[][]> features = colonies.getColonyFeatures(track_ID, tracks_with_labels, colonies.colonyLabels, imageDIC);
+			int cl = colonies.getLabel(track_ID, tracks_with_labels);
+
+			// access first value of first colony in second frame of features
+			System.out.print(features.get(1)[0][0]);
+			double a = features.get(1)[0][colonies.columnMapping.get("IDENTIFIER")];
+			System.out.print(a);
+
+
+
+
+
+
+
 
 
 			if (showColonyVoronoi) {
