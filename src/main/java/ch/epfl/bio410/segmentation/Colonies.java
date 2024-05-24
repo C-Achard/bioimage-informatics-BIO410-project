@@ -10,9 +10,9 @@ import net.haesleinhuepf.clij2.CLIJ2;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import ch.epfl.bio410.utils.utils;
 
+
 import java.nio.file.FileSystems;
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class Colonies {
     /** The goal of this class is to group clusters of bacteria into colonies.
@@ -27,7 +27,7 @@ public class Colonies {
     public Map<Integer, double[][]> colonyStats = new HashMap<>(); // holds the statistics for each frame
     private CLIJ2 clij2; // the CLIJ2 instance used for image processing
     private final LUT glasbeyLUT = utils.getGlasbeyLUT();
-    private final Map<String, Integer> columnMapping = new HashMap<>();
+    public final Map<String, Integer> columnMapping = new HashMap<>();
 
     /**
      * Constructor for Colonies.
@@ -40,6 +40,8 @@ public class Colonies {
         this.imageDIC = imageDIC;
         setColumnMapping();
     }
+
+
 
     /**
      * This method sets the column mapping for the statistics table from CLIJ2.
@@ -177,7 +179,14 @@ public class Colonies {
     this.colonyLabels = new ImagePlus("Colony labels", processedStack);
     // Set Glasbey LUT
     this.colonyLabels.setLut(this.glasbeyLUT);
-    if (keepVoronoi) {
+
+    // save pixel width "metadata" to ColonyLabels image too
+    this.colonyLabels.getCalibration().setXUnit("µm");
+    double pixelWidth = this.imageDIC.getCalibration().pixelWidth;
+    double pixelHeight = this.imageDIC.getCalibration().pixelHeight;
+    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+
+        if (keepVoronoi) {
         this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);
         this.voronoiDiagramStack = null;
         this.voronoiDiagrams.setLut(this.glasbeyLUT);
@@ -230,6 +239,7 @@ public class Colonies {
      * @param DICFrame ImagePlus object containing the DIC frame
      * @return double[][] containing the statistics for each label (see this.columnMapping)
      */
+  
     private static double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
         CLIJ2 clij2 = CLIJ2.getInstance();
         ClearCLBuffer input = clij2.push(DICFrame);
@@ -332,5 +342,9 @@ public class Colonies {
         clij2.release(input);
         clij2.release(destination);
         return destinationImagePlus;
-        }
     }
+
+
+}
+
+

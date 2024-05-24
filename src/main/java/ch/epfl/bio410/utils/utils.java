@@ -4,15 +4,27 @@ import ij.ImagePlus;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.ImageCalculator;
 import ij.IJ;
+import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.plugin.LutLoader;
 
 import java.awt.*;
 import java.awt.image.IndexColorModel;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import java.io.File;
 
 /**
  * This class implements utils functions
@@ -84,5 +96,33 @@ public class utils {
         return dog;
 
     }
+
+    public static List<List<String>> read_csv(String path){
+        List<List<String>> records = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return records;
+    }
+
+    public static List<CSVRecord> readCsv(String csvFilePath, int skipped_lines) throws IOException {
+        try (FileReader reader = new FileReader(csvFilePath);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            return csvParser.getRecords().stream().skip(skipped_lines).collect(Collectors.toList());
+        }
+    }
+    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
+        try (FileReader reader = new FileReader(csvFile);
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+        }
+    }
+
 
 }
