@@ -45,8 +45,11 @@ public class Plots implements Runnable {
     @Option(names = {"-o", "--output"}, description = "Output directory for the plots")
     private String outputDirectory;
 
-    @Option(names = {"-h", "--hist"}, description = "Column name for the histogram")
-    private String histColumn;
+    @Option(names = {"-x"}, description = "Column name 1 for the histogram")
+    private String hist1;
+
+    @Option(names = {"-y"}, description = "Column name 2 for the histogram")
+    private String hist2;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Plots()).execute(args);
@@ -63,7 +66,8 @@ public class Plots implements Runnable {
 
         System.out.println("CSV File Path: " + csvFilePath);
         System.out.println("Output Directory: " + outputDirectory);
-        System.out.println("Histogram Column: " + (histColumn != null ? histColumn : "Not Provided"));
+        System.out.println("Histogram Column 1: " + (hist1 != null ? hist1 : "Not Provided"));
+        System.out.println("Histogram Column 2: " + (hist2 != null ? hist2 : "Not Provided"));
 
         // Create the output directory if it doesn't exist
         File outputDir = new File(outputDirectory);
@@ -71,14 +75,27 @@ public class Plots implements Runnable {
             outputDir.mkdirs();
         }
 
-        // // Register the TIFF image writer SPI
-        // IIORegistry registry = IIORegistry.getDefaultInstance();
-        // registry.registerServiceProvider(new TIFFImageWriterSpi());
+        // String[] cols = {
+        //     "NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
+        // };
 
         try {
             List<CSVRecord> dataRows = readCsv(csvFilePath);
-            if (histColumn != null) {
-                createAndSaveHistogram(dataRows, histColumn, outputDirectory + File.separator + "hist_" + histColumn);
+            if (hist1 != null) {
+                // for (int i = 0; i < cols.length; i++) {
+                //     createAndSaveHistogram(dataRows, cols[i], outputDirectory + File.separator + "hist_" + cols[i]);
+                //     for (int j = i+1; j < cols.length; j++) {
+                //         if (hist2 != null) {
+                //             // createAndSaveHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
+                //             if (cols[i] != cols[j]) createAndSaveHeatmap(dataRows, cols[i], cols[j], outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
+                //         }
+                //     }
+                // }
+                createAndSaveHistogram(dataRows, hist1, outputDirectory + File.separator + "hist_" + hist1);
+                if (hist2 != null) {
+                    if (hist1 != hist2) createAndSaveHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
+                    createAndSaveHeatmap(dataRows, hist1, hist2, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
+                }
             } else {
                 Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
                 for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
@@ -266,11 +283,6 @@ public class Plots implements Runnable {
         g2.dispose();
 
         ImageIO.write(image, "png", new File(filePath + ".png"));
-        // Write the image as a TIFF file
-        // ImageWriterSpi writerSpi = new TIFFImageWriterSpi();
-        // ImageWriter writer = writerSpi.createWriterInstance();
-        // writer.setOutput(ImageIO.createImageOutputStream(new File(filePath + ".tif")));
-        // writer.write(image);
     }
     public static ImagePlus showSavedPlot(String filePath) {
         ImagePlus imp = openImage(filePath);
@@ -316,9 +328,11 @@ public class Plots implements Runnable {
 
             for (double value : values) {
                 int bin = (int) ((value - min) / binWidth);
-                if (bin >= 0 && bin < numBins) {
-                    yAxisData[bin]++;
+                // Edge case: include maximum
+                if (bin == numBins) {
+                    bin--;
                 }
+                yAxisData[bin]++;
             }
         }
 
@@ -329,5 +343,74 @@ public class Plots implements Runnable {
         public int[] gety() {
             return yAxisData;
         }
+    }
+
+    public static void createAndSaveHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, String filePath) throws IOException {
+        // Number of bins for the histogram
+        int numBinsX = 50;
+        int numBinsY = 50;
+    
+        // Extract the data for the specified columns
+        List<Double> xData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnX))).collect(Collectors.toList());
+        List<Double> yData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnY))).collect(Collectors.toList());
+    
+        // Find min and max values for the columns
+        Double minX = xData.stream().min(Double::compareTo).orElse(0.0);
+        Double maxX = xData.stream().max(Double::compareTo).orElse(1.0);
+        Double minY = yData.stream().min(Double::compareTo).orElse(0.0);
+        Double maxY = yData.stream().max(Double::compareTo).orElse(1.0);
+    
+        // Define bin width
+        Double binWidthX = (maxX - minX) / numBinsX;
+        Double binWidthY = (maxY - minY) / numBinsY;
+    
+        // Initialize the 2D array to count occurrences
+        Integer[][] zDataSparse = new Integer[numBinsY][numBinsX];
+        for (Integer[] row: zDataSparse) {
+            Arrays.fill(row, 0);
+        }
+    
+        // Count occurrences within bins
+        for (int i = 0; i < xData.size(); i++) {
+            int xBin = (int) ((xData.get(i) - minX) / binWidthX);
+            int yBin = (int) ((yData.get(i) - minY) / binWidthY);
+            
+            // Edge case: include maximum
+            if (xBin == numBinsX) xBin--;
+            if (yBin == numBinsY) yBin--;
+    
+            zDataSparse[yBin][xBin]++;
+        }
+    
+        // Create the bin edges
+        List<Double> xBins = new ArrayList<>();
+        List<Double> yBins = new ArrayList<>();
+        for (int i = 0; i <= numBinsX; i++) {
+            xBins.add(minX + i * binWidthX);
+        }
+        for (int i = 0; i <= numBinsY; i++) {
+            yBins.add(minY + i * binWidthY);
+        }
+
+        List<Number[]> zData = new ArrayList<Number[]>();
+        for (Integer j = 0; j < numBinsY; j++) {
+            for (Integer i = 0; i < numBinsX; i++) {
+                if (zDataSparse[j][i] != 0) {
+                    zData.add(new Number[]{i, j, zDataSparse[j][i]});
+                }
+            } 
+        }
+    
+        // Create and configure the heatmap chart
+        HeatMapChart chart = new HeatMapChartBuilder().width(1610).height(1000).title("Heatmap of " + columnX + " vs " + columnY).xAxisTitle(columnX).yAxisTitle(columnY).build();
+        chart.addSeries("heatmap", xBins, yBins, zData);
+        chart.getStyler().setXAxisLabelRotation(90);
+    
+        // Save the heatmap as a PNG file
+        BufferedImage image = new BufferedImage(chart.getWidth(), chart.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image.createGraphics();
+        chart.paint(g2, chart.getWidth(), chart.getHeight());
+        g2.dispose();
+        ImageIO.write(image, "png", new File(filePath + ".png"));
     }
 }
