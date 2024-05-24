@@ -189,6 +189,7 @@ public class TrackingConfig {
     public static List<String> listAvailableConfigs() {
         try {
             URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
+            System.out.println(resourceUrl);
             if (resourceUrl == null) {
                 return null;
             }
