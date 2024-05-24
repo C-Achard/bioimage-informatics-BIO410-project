@@ -19,6 +19,7 @@ The plugin provides two distinct but related components, Colony Detection and Re
 
 - Colony detection : each bacteria in the DIC channel is assigned to a colony. Labels are also filtered to remove small outliers.
 - Replisome tracking : the replisomes in the GFP channel are tracked over time, using TrackMate.
+- Analysis : TODO
 
 The results from these components can then be used to run the Analysis section.
 You can run both or only one of these workflows by checking the boxes in the `Run` section.
@@ -94,13 +95,25 @@ You can choose to display additional results
 *Example of the Voronoi diagram used for colony detection (animated over time)*
 
 
-## Running the analysis
+## Running the plugin
 
 Once you have selected the images and configurations you wish to use, click `OK` to run the plugin.
 To close the plugin without running it, click `Cancel`.
 
 ### Expected output
 
+The results will be structured as follows, assuming the `DATA/` folder is provided as input :
+```
+DATA
+├── Merged-1.tif
+├── ...
+└── results
+    ├── Merged-1_colony_labels.tif
+    ├── (Merged-1_voronoi_diagram.tif) # if selected
+    ├── tracks_Merged-1.csv
+    ├── spots_Merged-1.csv
+    └── ...
+```
 !!! note
     A `results/` folder will be created no matter which components you run, inside the folder containing the images you provided.
 
@@ -114,3 +127,6 @@ If you have selected to display the colony regions, the Voronoi diagram will als
 #### Tracking
 
 Once the tracking has run, tracks will be shown on the image in ImageJ.
+
+They will also be saved as csv files in the results folder, one for spots and one for tracks.
+The files would be called spots_{ImageName}.csv and tracks_{ImageName}.csv. 
