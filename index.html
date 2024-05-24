@@ -88,8 +88,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="Replisome Analysis" class="md-header__button md-logo" aria-label="Replisome Analysis" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="resources/logo_small.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -219,8 +218,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="Replisome Analysis" class="md-nav__button md-logo" aria-label="Replisome Analysis" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="resources/logo_small.png" alt="logo">
 
     </a>
     Replisome Analysis
@@ -304,6 +302,39 @@
       Installation
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data availability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data availability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#omero" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMERO
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#used-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Used images
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -398,6 +429,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#data-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data availability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data availability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#omero" class="md-nav__link">
+    <span class="md-ellipsis">
+      OMERO
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#used-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Used images
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
@@ -421,17 +485,50 @@
                   
 
 
-<p>@ -0,0 +1,21 @@</p>
 <h1 id="replisome-analysis-imagej-plugin-for-the-analysis-of-dna-replication-dynamics-in-bacteria">Replisome Analysis : ImageJ plugin for the analysis of DNA replication dynamics in bacteria</h1>
-<h2 id="welcome-to-the-replisome-analysis-plugin">Welcome to the Replisome Analysis Plugin</h2>
+<h2 id="welcome-to-the-replisome-analysis-plugin">Welcome to the Replisome Analysis Plugin <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23 17c0 3.31-2.69 6-6 6v-1.5c2.5 0 4.5-2 4.5-4.5H23M1 7c0-3.31 2.69-6 6-6v1.5c-2.5 0-4.5 2-4.5 4.5H1m7-2.68-4.59 4.6c-3.22 3.22-3.22 8.45 0 11.67s8.45 3.22 11.67 0l7.07-7.09c.49-.47.49-1.26 0-1.75a1.25 1.25 0 0 0-1.77 0l-4.42 4.42-.71-.71 6.54-6.54c.49-.49.49-1.28 0-1.77s-1.29-.49-1.79 0L14.19 13l-.69-.73 6.87-6.89c.49-.49.49-1.28 0-1.77s-1.28-.49-1.77 0l-6.89 6.89-.71-.7 5.5-5.48c.5-.49.5-1.28 0-1.77s-1.28-.49-1.77 0l-7.62 7.62a4.003 4.003 0 0 1-.33 5.28l-.71-.71a3 3 0 0 0 0-4.24l-.35-.35 4.07-4.07c.49-.49.49-1.28 0-1.77-.5-.48-1.29-.48-1.79.01Z"/></svg></span></h2>
 <p>This ImageJ plugin is intended to provide an automated analysis of DNA replication dynamics in bacteria.</p>
 <h2 id="intended-use">Intended Use</h2>
-<p>This plugin works for images of bacteria, specifically with a DIC channel and a fluorescent channel. The plugin is designed to analyze the dynamics of DNA replication in bacteria, specifically the movement of the replisome.</p>
+<p>This plugin works for 2D+t images of bacteria, specifically via differential interference contrast (DIC) microscopy for the bacterial bodies, and a fluorescent channel. 
+The plugin is designed to analyze the dynamics of DNA replication in bacteria, specifically the movement of the replisome.</p>
+<p align="center">
+  <img src="resources/images/DIC_example.png" alt="Example of the bacteria in the DIC channel" width="500"/>
+  <br>
+  <i>Example of the bacteria in the DIC channel</i>
+</p>
+
 <p>Bacteria are assigned to colonies using the DIC channel, and GFP-tagged DNaN in the second channel is used to track the replisome. The plugin can be used to track the movement of the replisome.</p>
+<p align="center">
+  <img src="resources/images/GFP_example.png" alt="Example of the bacteria in the GFP channel" width="500"/>
+  <br>
+  <i>Example of the bacteria in the GFP channel</i>
+</p>
+
 <p>Various plots and statistics can then be generated from the data.</p>
 <h2 id="installation">Installation</h2>
 <p>To install the plugin, take the provided .jar file in GitHub Packages and place it in the plugins folder of your ImageJ installation.</p>
 <p>The plugin will then be available in the ImageJ menu under Plugins &gt; Replisome Analysis.</p>
+<h2 id="data-availability">Data availability</h2>
+<h3 id="omero">OMERO</h3>
+<p>The plugin is designed to work with 2D+t images of bacteria.
+This version is intended to run only on the data available <a href="https://omero.epfl.ch/webclient/?show=project-2857">on OMERO</a>.</p>
+<h3 id="used-images">Used images</h3>
+<p>The images used in this plugin are :</p>
+<ul>
+<li><em>Merged-1.tif</em></li>
+<li><em>Merged-2.tif</em></li>
+<li><em>Merged-3.tif</em></li>
+</ul>
+<p>Specifications:</p>
+<ul>
+<li>2D + time, with 1s frame interval</li>
+<li>60x 1.4 NA oil objective, 103 um/pixel</li>
+<li>2 channels :<ul>
+<li>Channel 1 : Phase contrast (DIC), Bacteria morphology</li>
+<li>Channel 2 : Fluorescence, replisome foci (sfGFP Fluorescent protein)</li>
+</ul>
+</li>
+</ul>
 <h2 id="usage">Usage</h2>
 <p>For information on how to use the plugin, see the <a href="plugin_usage/">Plugin Usage</a> page.</p>
 
