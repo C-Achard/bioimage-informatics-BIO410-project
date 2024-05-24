@@ -33,6 +33,7 @@ import ch.epfl.bio410.tracking.Tracking;
 
 import static ch.epfl.bio410.segmentation.Colonies.assignTracksToColonies;
 import static ch.epfl.bio410.utils.utils.readCsv;
+import static ch.epfl.bio410.utils.utils.read_csv;
 import static org.apache.commons.collections4.IteratorUtils.indexOf;
 
 
@@ -223,6 +224,10 @@ public class Replisome_Analysis implements Command {
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
 			colonies.colonyLabels.show();
+
+
+			//List<List<String>> tracks = read_csv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString());
+			//assignTracksToColonies(tracks, colonies.colonyLabels);
 
 			// assigns a colony label to each track
 			List<CSVRecord> tracks = null;

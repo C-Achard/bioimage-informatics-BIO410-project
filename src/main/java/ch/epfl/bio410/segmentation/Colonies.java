@@ -180,9 +180,12 @@ public class Colonies {
     this.colonyLabels = new ImagePlus("Colony labels", processedStack);
     // Set Glasbey LUT
     this.colonyLabels.setLut(this.glasbeyLUT);
+
     // save pixel width "metadata" to ColonyLabels image too
     this.colonyLabels.getCalibration().setXUnit("µm");
-    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width=0.1031757 pixel_height=0.1031757 voxel_depth=1.0");
+    double pixelWidth = this.imageDIC.getCalibration().pixelWidth;
+    double pixelHeight = this.imageDIC.getCalibration().pixelHeight;
+    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
 
         if (keepVoronoi) {
         this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);
@@ -356,8 +359,8 @@ public class Colonies {
         int index = 0;
         for (CSVRecord track : tracks) {
             int frame = (int)Double.parseDouble(track.get("TRACK_START")); //for each track get start_frame
-            int x_micron = (int)Double.parseDouble(track.get("TRACK_X_LOCATION"));
-            int y_micron = (int)Double.parseDouble(track.get("TRACK_Y_LOCATION"));
+            double x_micron = Double.parseDouble(track.get("TRACK_X_LOCATION"));
+            double y_micron = Double.parseDouble(track.get("TRACK_Y_LOCATION"));
 
             // get the pixel size in microns
             double pixelWidth = colonyLabels.getCalibration().pixelWidth;
@@ -365,14 +368,13 @@ public class Colonies {
             // convert the micron coordinates to pixel coordinates
             int x_pixel = (int) (x_micron / pixelWidth);
             int y_pixel = (int) (y_micron / pixelHeight);
-            IJ.log("Track at frame " + frame + " at position (" + x_pixel + ", " + y_pixel + ")");
 
             // get the label of the colony at the position of the track
             ImageProcessor ip = stack.getProcessor(frame+1); // frame 0 in csv but frames start at 1 in imageJ
             int label = ip.getPixel(x_pixel, y_pixel); // getInterpolatedPixel
             // if the label is 0, get the label of the closest non-zero pixel
             if (label == 0) {
-                label = getClosestNonZeroLabel(ip, x_micron, y_micron);
+                label = getClosestNonZeroLabel(ip, x_pixel, y_pixel);
             }
             labelsArray[index] = label;
             index++;
@@ -383,6 +385,7 @@ public class Colonies {
 
     /**
      * When the label zero is assigned, this function finds closest non-zero colony label and returns it
+     * In 5 pixel neighborhood
      * @param ip ImageProcessor of the image
      * @param x track position x
      * @param y track position y
@@ -401,6 +404,25 @@ public class Colonies {
         }
         // If no non-zero label was found within the 3 pixel neighborhood, return 0
         return 0;
+    }
+
+
+
+    public List<double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracks, ImagePlus labels, ImagePlus DICFrame) {
+        List<double[][]> colonyFeatures = new ArrayList<>();
+        int label = (int)Double.parseDouble(tracks.get("TrackID").get("TRACK_START"));
+        for (CSVRecord track : tracks) {
+            if (track.get("TRACK_ID").equals(track_ID)) {
+                int start_frame = (int)Double.parseDouble(track.get("TRACK_START"));
+                int end_frame = (int)Double.parseDouble(track.get("TRACK_END"));
+                for(int i = start_frame; i <= end_frame; i++){
+                    // Get the label statistics for the colony in the current frame
+                    double[][] stats = getLabelStats(labels, DICFrame);
+                    colonyFeatures.add(stats);
+                }
+            }
+        }
+        return colonyFeatures;
     }
 
 
