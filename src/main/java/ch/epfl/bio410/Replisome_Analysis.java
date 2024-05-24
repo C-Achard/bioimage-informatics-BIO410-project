@@ -114,7 +114,7 @@ public class Replisome_Analysis implements Command {
 		dlg.addMessage("Use existing config, or set new parameters :");
 		try {
 			List<String> configList = TrackingConfig.listAvailableConfigs();
-			if (configList.isEmpty()) {
+			if (configList == null || configList.isEmpty()) {
 				IJ.log("No config files found in folder, please set the parameters manually");
 				isConfigAvailable = false;
 			} else {
