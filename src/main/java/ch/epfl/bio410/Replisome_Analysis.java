@@ -31,7 +31,6 @@ import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.tracking.Tracking;
 import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
-import static ch.epfl.bio410.utils.utils.readCsv;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -122,7 +121,9 @@ public class Replisome_Analysis implements Command {
 			}
 			dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
 		} catch (NullPointerException e) {
-			// try to load by copying the file to Downloads
+			// try to load by copying the file to Downloads (backup if loading from resources fails)
+			// NOTE : to avoid additional issues, this does not delete the copied files once it's done
+			// However they are extremely lightweight and should not be an issue
 			List<String> configList = Arrays.asList("configs/Merged1_config.properties", "configs/Merged2_config.properties", "configs/Merged3_config.properties");
 			List<String> copiedFiles = new ArrayList<>();
 			String copiedFile;
@@ -140,6 +141,7 @@ public class Replisome_Analysis implements Command {
 			if (copiedFiles.size() > 0) {
 				configList = copiedFiles;
 				isConfigAvailable = true;
+				IJ.log("Using backup configs : copying to Downloads folder");
 				dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
 			} else {
 				IJ.log("No config files found in folder, please set the parameters manually");
@@ -248,8 +250,6 @@ public class Replisome_Analysis implements Command {
 		// Tile
 		IJ.run("Tile");
 
-
-
 		if (computeColonies) {
 			IJ.log("------------------ COLONIES ------------------");
 			// Print the configuration
@@ -268,9 +268,6 @@ public class Replisome_Analysis implements Command {
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
 			colonies.colonyLabels.show();
-
-
-
 			if (showColonyVoronoi) {
 				colonies.voronoiDiagrams.show();
 			}
@@ -290,13 +287,7 @@ public class Replisome_Analysis implements Command {
 				IJ.log("ERROR : Failed to save colonies results.");
 				throw new RuntimeException(e);
 			}
-
 		}
-
-
-
-
-
 
 		if (computeTracking) {
 
@@ -336,7 +327,7 @@ public class Replisome_Analysis implements Command {
 
 				// Load the tracks
 				try {
-					tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+					tracks = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}

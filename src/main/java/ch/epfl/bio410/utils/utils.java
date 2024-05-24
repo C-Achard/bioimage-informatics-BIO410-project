@@ -12,8 +12,12 @@ import java.awt.*;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -25,6 +29,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * This class implements utils functions
@@ -97,6 +106,56 @@ public class utils {
 
     }
 
+    /**
+     * This method lists all files in a folder in the resources folder.
+     *
+     * @param folder The folder to list files from
+     * @return A list of file paths
+     */
+    public static java.util.List<String> listFilesInResourceFolder(String folder) {
+        URL url = TrackingConfig.class.getClassLoader().getResource(folder);
+        System.out.println(url);
+        if (url == null) {
+            return null;
+        }
+
+        List<String> files = new ArrayList<>();
+        try {
+            URI uri = url.toURI();
+            if (uri.getScheme().equals("file")) {
+                // Running from IDE - read files directly from the filesystem
+                File[] fileList = new File(uri).listFiles();
+                if (fileList != null) {
+                    for (File file : fileList) {
+                        if (file.isFile()) {
+                            files.add(file.getAbsolutePath());
+                        }
+                    }
+                }
+            } else if (uri.getScheme().equals("jar")) {
+                // Running from JAR - read entries in the JAR file
+                String[] parts = uri.toString().split("!");
+                // if jar name contains -sources, remove it
+                if (parts[0].contains("-sources")) {
+                    parts[0] = parts[0].replace("-sources", "");
+                }
+                try (JarFile jarFile = new JarFile(parts[0].substring(5))) {
+                    Enumeration<JarEntry> entries = jarFile.entries();
+                    while (entries.hasMoreElements()) {
+                        String name = entries.nextElement().getName();
+                        if (name.startsWith(folder + "/") && !name.equals(folder + "/")) {
+                            files.add(name);
+                        }
+                    }
+                }
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            return null;
+        }
+        return files;
+    }
 
     /**
      * This method reads a CSV file and returns a list of lists of strings

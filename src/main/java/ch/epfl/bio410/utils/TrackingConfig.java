@@ -188,21 +188,19 @@ public class TrackingConfig {
     }
     public static List<String> listAvailableConfigs() {
         try {
-            URL resourceUrl = TrackingConfig.class.getClassLoader().getResource("configs");
-            System.out.println(resourceUrl);
-            if (resourceUrl == null) {
+            List<String> configPaths = new ArrayList<>();
+            List<String> filePaths = utils.listFilesInResourceFolder("configs");
+            System.out.println(filePaths);
+            if (filePaths == null) {
                 return null;
             }
-            String path = resourceUrl.getPath();
-            File folder = new File(path);
-            File[] listOfFiles = folder.listFiles();
-            List<String> files = new ArrayList<>();
-            for (File file : listOfFiles) {
+            for (String filepath : filePaths) {
+                File file = new File(filepath);
                 if (file.isFile() && file.getName().endsWith(".properties")) {
-                    files.add(file.getName());
+                    configPaths.add(file.getName());
                 }
             }
-            return files;
+            return configPaths;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

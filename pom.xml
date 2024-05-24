@@ -150,6 +150,9 @@
     <build>
     <resources>
         <resource>
+            <directory>src/main/resources</directory>
+        </resource>
+        <resource>
             <directory>src/main/resources/configs</directory>
         </resource>
     </resources>
