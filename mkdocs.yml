@@ -1,9 +1,18 @@
 site_name: Replisome Analysis
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 nav:
     - Home: index.md
     - Plugin Usage: plugin_usage.md
 theme:
     name: material
+    logo: resources/logo_small.png
     palette:
         # Palette toggle for automatic mode
         - media: "(prefers-color-scheme)"

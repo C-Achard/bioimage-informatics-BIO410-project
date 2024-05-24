@@ -1,114 +1,61 @@
-<img src="icons/bii-banner.png" alt="image" width=auto height=40px>
-<hr>
+<img src="docs/resources/logo.png" alt="Logo" width="350" align="right" vspace = "80"/>
 
+# Replisome Analysis : ImageJ plugin for the analysis of DNA replication dynamics in bacteria
 
-## Plan 
-- Denoise
-- Remove debris and bright spots by size/brightness
-- Segment bacteria and spots (replisomes) + watershed
-- Track spot trajectory (use hwD)
+Welcome to the Replisome Analysis ImageJ plugin, designed to provide an automated analysis of DNA replication dynamics in bacteria.
 
-## Results to strive for
-- Position of replisome over time (main goal)
-- Position of replisome within its cell
-    - try to monitor how it disappears and appears on the other side of the cell
-    - create some sort of polarity for each cell (using centroid/center of mass)
-    - caracteriser les tips d'intensité à la division
-    - vérifier, être sûrs qu'on ne peut pas tracker le replisome rapido
-- Division time (gth)
-- How size evolves during the division and other division events statistics (gth)
-- Keeping track of families (mother and daughters)
-    - commencer avec watershed et puis merge labels qui se touchent, mais si énorme saut d'intensité pas merge (ajouter une condition)
+Using information from differential interference contrast (DIC) microscopy for the bacterial bodies, and a fluorescent channel for the replisome, 
+the plugin can analyze the dynamics of DNA replication in bacteria, specifically the movement of the replisome. 
 
+## Hardware requirements
 
+The plugin is designed to work with 2D+t images of bacteria.
+Due to the size of the images, a computer with at least 8GB of RAM is recommended; 16GB is preferred.
 
+**Note**:
+If you consistently run out of memory, you may want to adjust the memory setting in ImageJ.
+Go to Edit>Options>Memory & Threads and adjust the memory settings as needed, using no more than 75% of your available RAM.
+See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory) for more information. 
 
+## Installation and usage documentation
 
+To install the plugin, download the .jar from GitHub Packages on the right bar, and place it in the `plugins/` folder of your ImageJ installation.
 
+You can the find the plugin in the ImageJ menu under `Plugins > Replisome Analysis`.
 
+Full information on how to use the plugin can be found in the [Documentation](https://c-achard.github.io/bioimage-informatics-BIO410-project/).
 
+## Data availability and specifications
 
-### **[Moodle BIO-410](https://moodle.epfl.ch/course/view.php?id=15721)**  <img src="icons/epfl-logo.png" width=auto height=40px alt="image" align="right">
+The plugin is designed to work with 2D+t images of bacteria. 
+This version is intended to run only on the data available [on OMERO](https://omero.epfl.ch/webclient/?show=project-2857).
 
-><h3 style="font-weight:500; font-size:1.6em">Project Template</h3>
->
->
-  
+Specifications:
 
-## Description
-This repository aims at giving you the minimal structure for your java project.
-It already contains a pre-filled ``pom.xml`` file and a default package for your code.
+- 2D + time, with 1s frame interval
+- 60x 1.4 NA oil objective, 103 um/pixel
+- 2 channels :
+    - Channel 1 : Phase contrast (DIC), Bacteria morphology
+    - Channel 2 : Fluorescence, replisome foci (sfGFP Fluorescent protein)
 
-## How to use it ?
-### Fork the repository
-Forking a repository is copying the repository in another account. The copied project is independent
-of the parent repository ; you can then commit, push and pull on the new
-repository without modifying the parent repository.
+## Used libraries and tools
 
-1. Click on the ``Fork`` button
+This plugin uses :
 
-<div align="center">
-  <img src="icons/fork-window.png" width="90%">
-</div>
+- [ImageJ](https://imagej.net/) : Image processing and analysis in Java
+- [OMERO](https://www.openmicroscopy.org/omero/) : Open Microscopy Environment for biological imaging
+- [Fiji](https://fiji.sc/) : ImageJ distribution with plugins and libraries
+- [TrackMate](https://imagej.net/plugins/trackmate/) : ImageJ plugin for the analysis of single-particle tracking data
+- [clij2](https://clij.github.io/) : GPU-accelerated image processing in Image
+- [Maven](https://maven.apache.org/) : Software project management and comprehension tool
 
+## Authors
 
-2. On the windows, replace the name by the name of your project
-3. Select your account as namespace
-4. Select ``private`` visibility level
-5. Click on ``Fork project``
+- Mathilde Morelli
+- Cyril Achard
+- Linkai Dai
 
-Now the copied repository is owned by you.
+## Acknowledgements
 
-### Clone the repository locally
-1. Copy the repository URL
-2. Open a git bash terminal on your computer, at the location where you would like to clone the repo.
-3. Enter `` git clone `` and do a right click > paste to paste the repository URL.
-
-<div align="center">
-    <img src="icons/git-clone-command.png" width="80%">
-</div>
-
-### Open the project in intelliJ
-1. Open your project
-2. Under ``File -> Project structure``, select ``JDK 1.8`` and language level ``8``
-3. Click on ``Apply`` and ``OK``
-
-<div align="center">
-    <img src="icons/project-structure.png" width="80%">
-</div>
-
-### Modify the pom.xml
-1. Replace ``artifactID`` by the name of your project. No spaces are allowed ; only separate words by hyphens ``-``.
-2. Replace ``name`` by the name of your project, in a more natural syntax.
-3. Replace ``description`` by the description of your project.
-4. Add you and your colleagues as ``developers``, with a pseudo, full name, optionally an url, and the roles. You can keep the roles as they are.
-5. Add you and your colleagues as ``contributors``.
-6. Replace ``license.copyrightOwners`` by your name and the name of your colleagues.
-
-### Start the project 
-The class ``ProjectCommand`` gives you the minimal architecture to create a plugin in Fiji. 
-Populate it and create new classes with you own code related to your project.
-
-### Generate the jar file
-Under the maven center, double-click on ``insall``. It generates a ``target`` repository inside which you'll find your ``.jar`` file.
-
-
-<div align="center">
-    <img src="icons/maven-console.png" width="35%">
-</div>
-
->**Do not forget to change the version number in the ``pom.xml``**. Here is some conventions on the version number
->- The version number is composed of 3 numbers, separated by a dot ``1.0.2``
->   - The first number ``1`` indicates the major version.
->   - The second number ``0`` indicates the minor version.
->   - The third number ``2`` indicates the bugfix version.
->- The suffix ``SNAPSHOT`` indicates that the current version is still in development and may be different from 2 snapshot files.
->You can also find the suffix ``alpha`` or ``beta``.
->
-> **For the project, you just need to remove the ``SNAPSHOT`` when you generate your final jar.**
-> This version, without the ``SNAPSHOT``, is called a release and should never be modified again after publishing.
-> If you need to modify your code, for example, to fix bugs, then you should create a new version number.
-> 
-> If you would like to learn more about the versioning : [https://semver.org/](https://semver.org/) 
-> and [https://www.geeksforgeeks.org/introduction-semantic-versioning/](https://www.geeksforgeeks.org/introduction-semantic-versioning/)
-
+This project was developed as part of the BIO-410 course at EPFL.
+Thanks to the teachers and TAs !

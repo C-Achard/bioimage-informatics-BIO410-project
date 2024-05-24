@@ -239,7 +239,9 @@ public class Colonies {
      * @param DICFrame ImagePlus object containing the DIC frame
      * @return double[][] containing the statistics for each label (see this.columnMapping)
      */
-    public double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
+  
+    private static double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
+        CLIJ2 clij2 = CLIJ2.getInstance();
         ClearCLBuffer input = clij2.push(DICFrame);
         ClearCLBuffer labelmap = clij2.push(labels);
         double[][] stats = clij2.statisticsOfBackgroundAndLabelledPixels(input, labelmap);
