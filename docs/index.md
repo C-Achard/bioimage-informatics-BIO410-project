@@ -42,14 +42,26 @@ The plugin will then be available in the ImageJ menu under Plugins > Replisome A
 
 ## Data availability
 
+### OMERO
+
 The plugin is designed to work with 2D+t images of bacteria.
 This version is intended to run only on the data available [on OMERO](https://omero.epfl.ch/webclient/?show=project-2857).
+
+### Used images
 
 The images used in this plugin are :
 
 - *Merged-1.tif*
 - *Merged-2.tif*
 - *Merged-3.tif*
+
+Specifications:
+
+- 2D + time, with 1s frame interval
+- 60x 1.4 NA oil objective, 103 um/pixel
+- 2 channels :
+    - Channel 1 : Phase contrast (DIC), Bacteria morphology
+    - Channel 2 : Fluorescence, replisome foci (sfGFP Fluorescent protein)
 
 ## Usage
 
