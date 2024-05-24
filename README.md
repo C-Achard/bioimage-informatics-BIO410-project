@@ -1,13 +1,19 @@
+<img src="docs/resources/logo.png" alt="Logo" width="150" align="right" vspace = "80"/>
+
 # Replisome Analysis : ImageJ plugin for the analysis of DNA replication dynamics in bacteria
 
 Welcome to the Replisome Analysis Plugin.
 
-## Usage
+## Installation and usage documentation
 
 You can find information on how to use the plugin in the [Documentation](https://c-achard.github.io/bioimage-informatics-BIO410-project/).
 
-<img src="docs/resources/logo.png" alt="Logo" width="250" align="right" vspace = "80"/>
-
 ## Data availability
 
-Data is available on OMERO at the following link: [OMERO](https://omero.epfl.ch/webclient/?show=project-2857).
+Data is available on OMERO at the following link: [Project on OMERO](https://omero.epfl.ch/webclient/?show=project-2857).
+
+## Authors
+
+- Mathilde Morelli
+- Cyril Achard
+- Linkai Dai
