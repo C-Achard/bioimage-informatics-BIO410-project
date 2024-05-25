@@ -141,7 +141,7 @@ public class Colonies {
             // Therefore, we need to get the CC labels for the current frame, and filter the labels based on that.
             // It's a large slowdown, but it's the only way to ensure that we don't assign small labels to colonies.
             destinationImagePlus = connectedComponentsLabeling(slice);
-            double[][] connCompStats = getLabelStats(destinationImagePlus, slice); // these stats are only used for filtering
+            double[][] connCompStats = (destinationImagePlus, slice); // these stats are only used for filtering
             // Filter labels by area
             destinationImagePlus = filterLabelsByArea(destinationImagePlus, minLabelArea, connCompStats);
             // use the prev. frame's Voronoi diagram to assign labels
@@ -152,7 +152,7 @@ public class Colonies {
             }
 
             // get statistics from clij
-            double[][] stats = getLabelStats(destinationImagePlus, slice); // these are the stats we want to keep
+            double[][] stats = (destinationImagePlus, slice); // these are the stats we want to keep
             this.colonyStats.put(i, stats);
 
 
@@ -240,7 +240,7 @@ public class Colonies {
      * @return double[][] containing the statistics for each label (see this.columnMapping)
      */
   
-    private static double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
+    public static double[][] getLabelStats(ImagePlus labels, ImagePlus DICFrame) {
         CLIJ2 clij2 = CLIJ2.getInstance();
         ClearCLBuffer input = clij2.push(DICFrame);
         ClearCLBuffer labelmap = clij2.push(labels);
