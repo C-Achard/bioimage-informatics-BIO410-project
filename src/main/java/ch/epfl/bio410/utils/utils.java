@@ -187,10 +187,19 @@ public class utils {
      * @param imageDIC is the image from which we want to get the pixel size
      */
     public static void add_pixel_size(ImagePlus colonyLabels, ImagePlus imageDIC){
+        int[] dimensions = colonyLabels.getDimensions();
+        int channels = dimensions[2];
+        int slices = dimensions[3];
+        int frames = dimensions[4];
         colonyLabels.getCalibration().setXUnit("µm");
         double pixelWidth = imageDIC.getCalibration().pixelWidth;
         double pixelHeight = imageDIC.getCalibration().pixelHeight;
-        IJ.run(colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+        IJ.run(colonyLabels, "Properties...", "channels="+channels+" slices="+slices+" frames="+frames+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
     }
+
+    public static boolean FileExists(String path, String fileName){
+        return new File (Paths.get(path, "results", fileName).toString()).exists();
+    }
+
 
 }

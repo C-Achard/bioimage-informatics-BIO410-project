@@ -323,32 +323,37 @@ public class Replisome_Analysis implements Command {
 		}
 
 		if(computeAnalysis){
-			if((computeColonies || new File (Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tif").toString()).exists()) &&
-					(computeTracking || new File(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString()).exists()))
+			IJ.log("------------------ ANALYSIS ------------------");
+			String colonyFileName = imageNameWithoutExtension + "_colony_labels.tif";
+			String tracksFileName = "tracks_" + imageNameWithoutExtension + ".csv";
+			if((computeColonies || utils.FileExists(path, colonyFileName)) &&
+					(computeTracking || utils.FileExists(path, tracksFileName)))
 			{
 
-
 				List<CSVRecord> tracks = null;
-
 				// Load the tracks
 				try {
-					tracks = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+					tracks = utils.readCsv(Paths.get(path,  "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 				// Check if an ImaagePlus called colonylabels is open
 				if (WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif") != null) {
+					IJ.log("Assigning tracks to colony labels");
 					// Assign tracks to colonies and save the results
-					assignTracksToColonies(tracks, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageNameWithoutExtension);
+					assignTracksToColonies(tracks, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageNameWithoutExtension, path);
 				}
 				// Or open a new one
 				else{
 					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
 					colonyLabels.show();
+					IJ.run("Tile");
 					utils.add_pixel_size(colonyLabels, imageDIC);
+					IJ.log("Assigning tracks to colony labels");
 					// Assign tracks to colonies and save the results
-					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension); //not sure if this works
+					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension, path); //not sure if this works
 				}
+
 
 				/*
 				 * Example of how to access features for a track
@@ -356,24 +361,28 @@ public class Replisome_Analysis implements Command {
 				 * Features are stored in a list of double[][] where the first index is the colony label and the second index is the feature
 				 * The different items of the list are the frames from TRACK_START to TRACK_STOP
 				 */
-
-
+				
 				//Getting features for a track
 				Colonies colony = new Colonies(imageDIC);
 				Results results = new Results();
 				List<CSVRecord>  tracks_with_labels = null;
+				ImagePlus colonyLabelss = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
 				try {
-					tracks_with_labels = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+					tracks_with_labels = utils.readCsv(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 				String track_ID = "2";
-				List<double[][]> features = results.getColonyFeatures(track_ID, tracks_with_labels, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageDIC);
+				List<double[][]> features = results.getColonyFeatures(track_ID, tracks_with_labels, colonyLabelss, imageDIC); //WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageDIC);
 				int label_for_a_specific_track_ID = results.getLabel(track_ID, tracks_with_labels);
 
 				// access first value of first colony in second frame of features
 				double a = features.get(1)[label_for_a_specific_track_ID][colony.columnMapping.get("MEAN_INTENSITY")];
 				System.out.print(a);
+
+
+				IJ.log("All done!");
+
 			}
 			else{
 				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");

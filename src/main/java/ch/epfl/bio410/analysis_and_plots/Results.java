@@ -1,6 +1,7 @@
 package ch.epfl.bio410.analysis_and_plots;
 
 import ch.epfl.bio410.segmentation.Colonies;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
@@ -11,6 +12,7 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,7 @@ public class Results {
      * @param colonyLabels ImagePlus object containing the image with colony labels
      */
     public static void assignTracksToColonies(
-            List<CSVRecord> tracks , ImagePlus colonyLabels, String imageNameWithoutExtension){
+            List<CSVRecord> tracks , ImagePlus colonyLabels, String imageNameWithoutExtension, String path){
         ImageStack stack = colonyLabels.getImageStack();
         int[] labelsArray = new int[tracks.size()];
         int index = 0;
@@ -60,8 +62,10 @@ public class Results {
 
         // add labelsarray as new feature of tracks
         // and save to new csv in results folder
+        String tracksPath = path + "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv";
+        IJ.log("Saving tracks with colony labels to " + tracksPath);
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString()));
             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT);
 
             // Write header
@@ -124,14 +128,15 @@ public class Results {
 
 
     public List<double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracks, ImagePlus labels, ImagePlus imageDIC) {
-        //ImagePlus labels = colony.colonyLabels;
         Colonies colony = new Colonies(labels);
         List<double[][]> colonyFeatures = new ArrayList<>();
         for (CSVRecord track : tracks) {
             if (track.get("TRACK_ID").equals(track_ID)) {
                 int start_frame = (int)Double.parseDouble(track.get("TRACK_START"));
                 int end_frame = (int)Double.parseDouble(track.get("TRACK_STOP"));
+                IJ.log("Track " + track_ID + " from frame " + start_frame + " to " + end_frame);
                 for(int i = start_frame; i <= end_frame; i++){
+                    IJ.log("Frame " + i + " out of " + end_frame);
                     // Get the label statistics for the colony in the current frame
                     ImageProcessor ip_labels = labels.getImageStack().getProcessor(i+1); // get frame i of labels
                     ImagePlus label = new ImagePlus("Frame", ip_labels.duplicate()); //get imageplus of frame i
