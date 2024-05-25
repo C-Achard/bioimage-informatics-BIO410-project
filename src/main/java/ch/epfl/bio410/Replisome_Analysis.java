@@ -27,9 +27,6 @@ import java.util.List;
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.tracking.Tracking;
-
-import ch.epfl.bio410.analysis_and_plots.Results;
-
 import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
 import static ch.epfl.bio410.utils.utils.readCsv;
 
@@ -106,7 +103,9 @@ public class Replisome_Analysis implements Command {
 		// Choose what to run
 		dlg.addCheckbox("Run colony detection on DIC channel", runColonies);
 		dlg.addCheckbox("Run tracking on GFP channel", runTracking);
-		dlg.addCheckbox("Run analysis (only possible if both colony detection AND tracking are also run or have been run)", runAnalysis);
+		dlg.addCheckbox("Run analysis", runAnalysis);
+		dlg.addMessage("Note : If you want to run analysis, please make sure that both colony detection and tracking have been run.");
+		dlg.addMessage("If the previous steps have been run, make sure to select the folder containing the results.");
 		dlg.addMessage("__________________________");
 		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
@@ -284,10 +283,8 @@ public class Replisome_Analysis implements Command {
 			}
 		}
 
-
-
 		if(computeAnalysis){
-			if((computeColonies || new File (Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tiff").toString()).exists()) &&
+			if((computeColonies || new File (Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tif").toString()).exists()) &&
 					(computeTracking || new File(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString()).exists()))
 			{
 
