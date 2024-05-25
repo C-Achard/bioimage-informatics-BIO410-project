@@ -6,6 +6,9 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import ij.ImagePlus;
 import ij.gui.NewImage;
+// import io.scif.DefaultParser;
+// import net.imagej.updater.CommandLine;
+
 import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
@@ -86,7 +89,7 @@ public class Plots implements Runnable {
 
         try {
             // Get the data from the CSV file
-            List<CSVRecord> dataRows = readCsv(csvFilePath);
+            List<CSVRecord> dataRows = readCsv(csvFilePath, 4);
 
             // If histogram, then plot histogram instead of line plot
             if (hist1 != null) {
@@ -162,12 +165,8 @@ public class Plots implements Runnable {
      * @return List of CSV records
      * @throws IOException If an error occurs while reading the file
      */
-    public static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
-        try (FileReader reader = new FileReader(csvFilePath);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            // Skip the first three lines (header) and collect the remaining records
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
-        }
+    public static List<CSVRecord> readCsv(String csvFilePath, int skip) throws IOException {
+        return readCsv(new File(csvFilePath), skip);
     }
 
     /**
@@ -176,11 +175,11 @@ public class Plots implements Runnable {
      * @return List of CSV records
      * @throws IOException If an error occurs while reading the file
      */
-    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
+    public static List<CSVRecord> readCsv(File csvFile, int skip) throws IOException {
         try (FileReader reader = new FileReader(csvFile);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            // Skip the first three lines (header) and collect the remaining records
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
+            // Skip the first n-1 lines (header) and collect the remaining records
+            return csvParser.getRecords().stream().skip(skip-1).collect(Collectors.toList());
         }
     }
 

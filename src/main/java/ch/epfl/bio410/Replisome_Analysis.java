@@ -15,14 +15,15 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
+import javax.swing.*;
 
 import net.imagej.ImageJ;
+import fiji.plugin.trackmate.FeatureModel;
+import fiji.plugin.trackmate.Model;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
-import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Model;
 
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
@@ -32,8 +33,9 @@ import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.Tracking;
 import ch.epfl.bio410.analysis_and_plots.Analysis;
 import ch.epfl.bio410.analysis_and_plots.Plots;
-
-import javax.swing.*;
+import ch.epfl.bio410.analysis_and_plots.Results;
+import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
+import static ch.epfl.bio410.utils.utils.readCsv;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
@@ -44,7 +46,7 @@ public class Replisome_Analysis implements Command {
 		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
-		private final boolean plotAnalysis = true;
+		private final boolean runAnalysis = true;
 		private final int colony_min_area = 50; // Colony assignment parameters, minimum colony area
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
@@ -108,7 +110,9 @@ public class Replisome_Analysis implements Command {
 		// Choose what to run
 		dlg.addCheckbox("Run colony detection on DIC channel", runColonies);
 		dlg.addCheckbox("Run tracking on GFP channel", runTracking);
-		dlg.addCheckbox("Plot analysis", plotAnalysis);
+		dlg.addCheckbox("Run analysis", runAnalysis);
+		dlg.addMessage("Note : If you want to run analysis, please make sure that both colony detection and tracking have been run.");
+		dlg.addMessage("If the previous steps have been run, make sure to select the folder containing the results.");
 		dlg.addMessage("__________________________");
 		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
@@ -149,7 +153,7 @@ public class Replisome_Analysis implements Command {
 		//// CHOICES OF COMPUTATION
 		boolean computeColonies = dlg.getNextBoolean();
 		boolean computeTracking = dlg.getNextBoolean();
-		boolean plotAnalysis = dlg.getNextBoolean();
+		boolean computeAnalysis = dlg.getNextBoolean();
 		//// CONFIG (Existing)
 		boolean useExistingConfig = dlg.getNextBoolean();
 		String configName = dlg.getNextChoice();
@@ -183,6 +187,8 @@ public class Replisome_Analysis implements Command {
 			this.config = TrackingConfig.createFromPropertiesFile(configName);
 		}
 
+
+
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
 		// Results
@@ -190,8 +196,9 @@ public class Replisome_Analysis implements Command {
 		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
 		// create "results" folder if it doesn't exist
 		File resultsFolder = Paths.get(path, "results").toFile();
-    	//pour mathilde
-    	//String imagePath = "C:/Users/mathi/OneDrive/Documents/EPFL/MA4/BioimageAnalysis/Project/DATA/Merged-1.tif"
+
+
+
 		ImagePlus imp = IJ.openImage(imagePath);
 		imp.show();
 
@@ -204,6 +211,8 @@ public class Replisome_Analysis implements Command {
 		imageGFP.show();
 		// Tile
 		IJ.run("Tile");
+
+
 
 		if (computeColonies) {
 			IJ.log("------------------ COLONIES ------------------");
@@ -223,6 +232,9 @@ public class Replisome_Analysis implements Command {
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
 			colonies.colonyLabels.show();
+
+
+
 			if (showColonyVoronoi) {
 				colonies.voronoiDiagrams.show();
 			}
@@ -242,7 +254,13 @@ public class Replisome_Analysis implements Command {
 				IJ.log("ERROR : Failed to save colonies results.");
 				throw new RuntimeException(e);
 			}
+
 		}
+
+
+
+
+
 
 		if (computeTracking) {
 
@@ -272,44 +290,61 @@ public class Replisome_Analysis implements Command {
 			}
 		}
 
-		if (plotAnalysis) {
-			// Plot the analysis
-			IJ.log("------------------ ANALYSIS ------------------");
-			// Load the results
-			String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
-			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
-			String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
-			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+		if(computeAnalysis){
+			if((computeColonies || new File (Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tif").toString()).exists()) &&
+					(computeTracking || new File(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString()).exists()))
+			{
 
-			String plotSavePath = Paths.get(path, "results").toString();
-			// Create the "plots" folder and update the path
-			File plotsFolder = Paths.get(path, "results", "plots").toFile();
-			if (!plotsFolder.exists()) {
-				if (plotsFolder.mkdir()) {
-					IJ.log("Directory 'plots' is created!");
-				} else {
-					IJ.log("Failed to create directory 'plots'!");
-					throw new RuntimeException("Failed to create plots directory. Aborting.");
+
+				List<CSVRecord> tracks = null;
+
+				// Load the tracks
+				try {
+					tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
 				}
-			}
-			plotSavePath = Paths.get(path, "results", "plots").toString();
-			// Plot the analysis
-			try {
-			List<CSVRecord> dataRows = Plots.readCsv(csvTracksPath);
-//			List<CSVRecord> dataRows = Plots.readCsv(csvSpotsPath);
-			Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
+				// Check if an ImaagePlus called colonylabels is open
+				if (WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif") != null) {
+					// Assign tracks to colonies and save the results
+					assignTracksToColonies(tracks, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageNameWithoutExtension);
+				}
+				// Or open a new one
+				else{
+					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
+					colonyLabels.show();
+					utils.add_pixel_size(colonyLabels, imageDIC);
+					// Assign tracks to colonies and save the results
+					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension); //not sure if this works
+				}
 
-				JPanel chartPanelTracks = Plots.plotTracksFeatures(
-                        new ArrayList<>(groupedData.keySet()),
-						dataRows,
-						"TRACK_DURATION"
-				);
-				// Save plots
-				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
-				// Show plots
-				Plots.showSavedPlot(plotSavePath + File.separator + "plot_tracks.png");
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+				/*
+				 * Example of how to access features for a track
+				 * See other accessible features in Colonies' setColumnMapping
+				 * Features are stored in a list of double[][] where the first index is the colony label and the second index is the feature
+				 * The different items of the list are the frames from TRACK_START to TRACK_STOP
+				 */
+
+
+				//Getting features for a track
+				Colonies colony = new Colonies(imageDIC);
+				Results results = new Results();
+				List<CSVRecord>  tracks_with_labels = null;
+				try {
+					tracks_with_labels = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				String track_ID = "2";
+				List<double[][]> features = results.getColonyFeatures(track_ID, tracks_with_labels, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageDIC);
+				int label_for_a_specific_track_ID = results.getLabel(track_ID, tracks_with_labels);
+
+				// access first value of first colony in second frame of features
+				double a = features.get(1)[label_for_a_specific_track_ID][colony.columnMapping.get("MEAN_INTENSITY")];
+				System.out.print(a);
+			}
+			else{
+				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");
 			}
 		}
     }
