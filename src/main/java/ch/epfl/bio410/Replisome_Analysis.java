@@ -304,9 +304,14 @@ public class Replisome_Analysis implements Command {
 					assignTracksToColonies(tracks, WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageNameWithoutExtension);
 				}
 				// Or open a new one
-				else{
-					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tif").toString());
+				else{	ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
 					colonyLabels.show();
+					//imageDIC.show();
+					colonyLabels.getCalibration().setXUnit("µm");
+					double pixelWidth = imageDIC.getCalibration().pixelWidth;
+					double pixelHeight = imageDIC.getCalibration().pixelHeight;
+					IJ.run(colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+
 					// Assign tracks to colonies and save the results
 					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension); //not sure if this works
 				}
