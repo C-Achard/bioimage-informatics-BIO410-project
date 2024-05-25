@@ -335,9 +335,6 @@ public class Replisome_Analysis implements Command {
 				// access first value of first colony in second frame of features
 				double a = features.get(1)[label_for_a_specific_track_ID][colony.columnMapping.get("MEAN_INTENSITY")];
 				System.out.print(a);
-
-
-
 			}
 			else{
 				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");
