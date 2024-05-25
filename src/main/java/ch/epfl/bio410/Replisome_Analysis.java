@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+import ch.epfl.bio410.analysis_and_plots.Results;
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.utils.TrackingConfig;
 import fiji.plugin.trackmate.FeatureModel;
@@ -304,12 +305,12 @@ public class Replisome_Analysis implements Command {
 				}
 				// Or open a new one
 				else{
-					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tiff").toString());
+					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension +"_colony_labels.tif").toString());
 					colonyLabels.show();
 					// Assign tracks to colonies and save the results
 					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension); //not sure if this works
 				}
-				
+
 				/*
 				 * Example of how to access features for a track
 				 * See other accessible features in Colonies' setColumnMapping
@@ -317,7 +318,7 @@ public class Replisome_Analysis implements Command {
 				 * The different items of the list are the frames from TRACK_START to TRACK_STOP
 				 */
 
-				/*
+
 				//Getting features for a track
 				Colonies colony = new Colonies(imageDIC);
 				Results results = new Results();
@@ -334,7 +335,7 @@ public class Replisome_Analysis implements Command {
 				// access first value of first colony in second frame of features
 				double a = features.get(1)[label_for_a_specific_track_ID][colony.columnMapping.get("MEAN_INTENSITY")];
 				System.out.print(a);
-				*/
+
 
 
 			}

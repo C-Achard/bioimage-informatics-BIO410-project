@@ -24,9 +24,9 @@ public class Results {
 
 
     /**
-     * This method assigns labels to tracks based on the position of the colonies in the first frame.
+     * This method assigns labels to tracks based on the position of the colonies in the first frame of the track.
      * Assign each track to a colony label (unique color).
-     * Also checks label != 0 and assigns to closest ,on zero label if it is.
+     * Also checks label != 0 and assigns to closest, or zero label if it is.
      * @param tracks List of tracks from the tracking CSV file
      * @param colonyLabels ImagePlus object containing the image with colony labels
      */
@@ -36,7 +36,7 @@ public class Results {
         int[] labelsArray = new int[tracks.size()];
         int index = 0;
         for (CSVRecord track : tracks) {
-            int frame = (int)Double.parseDouble(track.get("TRACK_START")); //for each track get start_frame
+            int frame = (int) Double.parseDouble(track.get("TRACK_START")); // for each track get start_frame
             double x_micron = Double.parseDouble(track.get("TRACK_X_LOCATION"));
             double y_micron = Double.parseDouble(track.get("TRACK_Y_LOCATION"));
 
@@ -92,8 +92,8 @@ public class Results {
 
 
     /**
-     * When the label zero is assigned, this function finds closest non-zero colony label and returns it
-     * In 5 pixel neighborhood
+     * When the label zero is assigned, this function finds closest non-zero colony label, if any, and returns it
+     * By default this will search in a 5x5 pixel neighborhood.
      * @param ip ImageProcessor of the image
      * @param x track position x
      * @param y track position y
@@ -104,10 +104,17 @@ public class Results {
             for (int j = -2; j <= 2; j++) {
                 // skip the center pixel
                 if (i == 0 && j == 0) continue;
-                // get the label of the neighboring pixel
-                int label = ip.getPixel(x + i, y + j);
-                // if the label is non-zero, return it
-                if (label != 0) return label;
+                if (x + i >= 0 && x + i < ip.getWidth() && y + j >= 0 && y + j < ip.getHeight()) {
+                    try {
+                        // get the label of the neighboring pixel
+                        int label = ip.getPixel(x + i, y + j);
+                        // if the label is non-zero, return it
+                        if (label != 0) return label;
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        // skip if the pixel is out of bounds
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         // If no non-zero label was found within the 3 pixel neighborhood, return 0
