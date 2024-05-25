@@ -8,6 +8,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,15 +36,14 @@ import ch.epfl.bio410.analysis_and_plots.Analysis;
 import ch.epfl.bio410.analysis_and_plots.Plots;
 import ch.epfl.bio410.analysis_and_plots.Results;
 import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
-import static ch.epfl.bio410.utils.utils.readCsv;
 
 
 @Plugin(type = Command.class, menuPath = "Plugins>BII>Replisome Analysis")
 public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
+		private boolean isConfigAvailable = false;
 		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
 		private String[] fileList = new String[]{};
-		// private String path = utils.getFolderPathInResources("DATA"); does not work this way, as it means including several Gbs of data in the jar. We will have to load from our specific paths each time.
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
 		private final boolean runAnalysis = true;
@@ -116,12 +116,46 @@ public class Replisome_Analysis implements Command {
 		dlg.addMessage("__________________________");
 		// Config
 		dlg.addMessage("Use existing config, or set new parameters :");
-		dlg.addCheckbox("Use existing config", true);
-		List<String> configList = TrackingConfig.listAvailableConfigs();
-		if (configList.size() == 0) {
-			IJ.log("No config files found in folder " + path + ", please set the parameters");
+		try {
+			List<String> configList = TrackingConfig.listAvailableConfigs();
+			if (configList == null || configList.isEmpty()) {
+				IJ.log("No config files found in folder, please set the parameters manually");
+				isConfigAvailable = false;
+			} else {
+				isConfigAvailable = true;
+			}
+			dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+		} catch (NullPointerException e) {
+			// try to load by copying the file to Downloads (backup if loading from resources fails)
+			// NOTE : to avoid additional issues, this does not delete the copied files once it's done
+			// However they are extremely lightweight and should not be an issue
+			List<String> configList = Arrays.asList("configs/Merged1_config.properties", "configs/Merged2_config.properties", "configs/Merged3_config.properties");
+			List<String> copiedFiles = new ArrayList<>();
+			String copiedFile;
+			for (String config : configList) {
+				try {
+					copiedFile = TrackingConfig.copyFromResources(config);
+				} catch (NullPointerException e2) {
+					copiedFile = null;
+				}
+				if (copiedFile != null) {
+					copiedFiles.add(copiedFile);
+				}
+			}
+			// Add the paths of the copied files to the list
+			if (copiedFiles.size() > 0) {
+				configList = copiedFiles;
+				isConfigAvailable = true;
+				IJ.log("Using backup configs : copying to Downloads folder");
+				dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+			} else {
+				IJ.log("No config files found in folder, please set the parameters manually");
+				isConfigAvailable = false;
+				// Add None as a choice
+				dlg.addChoice("Config", new String[]{"None"}, "None");
+			}
 		}
-		dlg.addChoice("Config", configList.toArray(new String[0]), configList.size() > 0 ? configList.get(0) : "");
+		dlg.addCheckbox("Use existing config", isConfigAvailable);
 		//////// PARAMETERS (if not using existing config) ///////////
 //		dlg.addMessage("__________________________");
 		dlg.addMessage("OR set new parameters :");
@@ -155,8 +189,8 @@ public class Replisome_Analysis implements Command {
 		boolean computeTracking = dlg.getNextBoolean();
 		boolean computeAnalysis = dlg.getNextBoolean();
 		//// CONFIG (Existing)
-		boolean useExistingConfig = dlg.getNextBoolean();
 		String configName = dlg.getNextChoice();
+		boolean useExistingConfig = dlg.getNextBoolean();
 		// Colony detection parameters
 		int colony_min_area = (int) dlg.getNextNumber();
 		// Detection parameters
@@ -171,8 +205,8 @@ public class Replisome_Analysis implements Command {
 		//// DISPLAY
 		boolean showColonyVoronoi = dlg.getNextBoolean();
 
-		// Set the config if needed
-		if (!useExistingConfig) {
+		// Set the config if needed (use existing if set or no config available)
+		if (!useExistingConfig || !isConfigAvailable) {
 			this.config = new TrackingConfig(
 					colony_min_area,
 					radius,
@@ -184,7 +218,16 @@ public class Replisome_Analysis implements Command {
 					durationFilter
 			);
 		} else {
-			this.config = TrackingConfig.createFromPropertiesFile(configName);
+			// if the configName contains :, it is a path and should be loaded as such
+			// this only occurs if the config had to be copied from the resources to Downloads
+			if (configName.contains(":")) {
+				File configFile = new File(configName);
+				// we use the overloaded constructor that takes a File
+				this.config = TrackingConfig.createFromPropertiesFile(configFile);
+			} else {
+				// otherwise, we load it from the resources as String
+				this.config = TrackingConfig.createFromPropertiesFile(configName);
+			}
 		}
 
 
@@ -212,8 +255,6 @@ public class Replisome_Analysis implements Command {
 		// Tile
 		IJ.run("Tile");
 
-
-
 		if (computeColonies) {
 			IJ.log("------------------ COLONIES ------------------");
 			// Print the configuration
@@ -232,9 +273,6 @@ public class Replisome_Analysis implements Command {
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
 			colonies.colonyLabels.show();
-
-
-
 			if (showColonyVoronoi) {
 				colonies.voronoiDiagrams.show();
 			}
@@ -254,13 +292,7 @@ public class Replisome_Analysis implements Command {
 				IJ.log("ERROR : Failed to save colonies results.");
 				throw new RuntimeException(e);
 			}
-
 		}
-
-
-
-
-
 
 		if (computeTracking) {
 
@@ -300,7 +332,7 @@ public class Replisome_Analysis implements Command {
 
 				// Load the tracks
 				try {
-					tracks = readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+					tracks = utils.readCsv(Paths.get(System.getProperty("user.dir"), "DATA", "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
