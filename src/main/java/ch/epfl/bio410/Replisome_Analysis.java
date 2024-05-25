@@ -200,7 +200,7 @@ public class Replisome_Analysis implements Command {
 		//// DISPLAY
 		boolean showColonyVoronoi = dlg.getNextBoolean();
 
-		// Set the config if needed (use existing is set or no config available)
+		// Set the config if needed (use existing if set or no config available)
 		if (!useExistingConfig || !isConfigAvailable) {
 			this.config = new TrackingConfig(
 					colony_min_area,
