@@ -141,7 +141,7 @@ public class Colonies {
             // Therefore, we need to get the CC labels for the current frame, and filter the labels based on that.
             // It's a large slowdown, but it's the only way to ensure that we don't assign small labels to colonies.
             destinationImagePlus = connectedComponentsLabeling(slice);
-            double[][] connCompStats = (destinationImagePlus, slice); // these stats are only used for filtering
+            double[][] connCompStats = getLabelStats(destinationImagePlus, slice); // these stats are only used for filtering
             // Filter labels by area
             destinationImagePlus = filterLabelsByArea(destinationImagePlus, minLabelArea, connCompStats);
             // use the prev. frame's Voronoi diagram to assign labels
@@ -152,7 +152,7 @@ public class Colonies {
             }
 
             // get statistics from clij
-            double[][] stats = (destinationImagePlus, slice); // these are the stats we want to keep
+            double[][] stats = getLabelStats(destinationImagePlus, slice); // these are the stats we want to keep
             this.colonyStats.put(i, stats);
 
 
@@ -181,10 +181,8 @@ public class Colonies {
     this.colonyLabels.setLut(this.glasbeyLUT);
 
     // save pixel width "metadata" to ColonyLabels image too
-    this.colonyLabels.getCalibration().setXUnit("µm");
-    double pixelWidth = this.imageDIC.getCalibration().pixelWidth;
-    double pixelHeight = this.imageDIC.getCalibration().pixelHeight;
-    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+        utils.add_pixel_size(colonyLabels, imageDIC);
+
 
         if (keepVoronoi) {
         this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);
