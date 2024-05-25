@@ -1,13 +1,11 @@
 package ch.epfl.bio410.analysis_and_plots;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
+// import picocli.CommandLine;
+// import picocli.CommandLine.Command;
+// import picocli.CommandLine.Option;
+// import picocli.CommandLine.Parameters;
 import ij.ImagePlus;
 import ij.gui.NewImage;
-// import io.scif.DefaultParser;
-// import net.imagej.updater.CommandLine;
 
 import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
@@ -25,7 +23,7 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import ch.epfl.bio410.utils.utils;
+// import ch.epfl.bio410.utils.utils;
 
 import static ij.IJ.openImage;
 
@@ -33,93 +31,102 @@ import static ij.IJ.openImage;
  * Class for generation of plots, from CSV files or existing dataframes.
  * Already implemented: feature-feature line plots, feature histograms and feature-feature heatmaps.
  */
-@Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
-        description = "Processes a CSV file and generates plots.")
-public class Plots implements Runnable {
+// @Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
+//         description = "Processes a CSV file and generates plots.")
+// public class Plots implements Runnable {
+public class Plots{
 
-    @Parameters(index = "0", description = "Path to the CSV file")
-    private String csvFilePath;
+    // @Parameters(index = "0", description = "Path to the CSV file")
+    // private String csvFilePath;
 
-    @Option(names = {"-o", "--output"}, description = "Output directory for the plots")
-    private String outputDirectory;
+    // @Option(names = {"-o", "--output"}, description = "Output directory for the plots")
+    // private String outputDirectory;
 
-    @Option(names = {"-x"}, description = "Column name 1 for the histogram")
-    private String hist1;
+    // @Option(names = {"-x"}, description = "Column name 1 for the histogram")
+    // private String hist1;
 
-    @Option(names = {"-y"}, description = "Column name 2 for the histogram")
-    private String hist2;
+    // @Option(names = {"-y"}, description = "Column name 2 for the histogram")
+    // private String hist2;
 
     /**
      * Command-line implementation for easier debugging.
      * @param args Command-line arguments: CSV file, output dir (optional), features to plot (optional)
      */
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new Plots()).execute(args);
-        System.exit(exitCode);
+        // int exitCode = new CommandLine(new Plots()).execute(args);
+        // System.exit(exitCode);
     }
 
     /**
      * Arguments passed to main() are then used in run() to run and test the code.
      */
-    @Override
-    public void run() {
-        // If output not specified, set output directory based on input file
-        if (outputDirectory == null) {
-            File csvFile = new File(csvFilePath);
-            String baseName = csvFile.getName().substring(0, csvFile.getName().lastIndexOf('.'));
-            outputDirectory = csvFile.getParent() + File.separator + baseName;
-        }
+    // @Override
+    // public void run() {
+    //     // If output not specified, set output directory based on input file
+    //     if (outputDirectory == null) {
+    //         File csvFile = new File(csvFilePath);
+    //         String baseName = csvFile.getName().substring(0, csvFile.getName().lastIndexOf('.'));
+    //         outputDirectory = csvFile.getParent() + File.separator + baseName;
+    //     }
 
-        // Debugging: have the arguments been handled correctly?
-        System.out.println("CSV File Path: " + csvFilePath);
-        System.out.println("Output Directory: " + outputDirectory);
-        System.out.println("Histogram Column 1: " + (hist1 != null ? hist1 : "Not Provided"));
-        System.out.println("Histogram Column 2: " + (hist2 != null ? hist2 : "Not Provided"));
+    //     // Debugging: have the arguments been handled correctly?
+    //     System.out.println("CSV File Path: " + csvFilePath);
+    //     System.out.println("Output Directory: " + outputDirectory);
+    //     System.out.println("Histogram Column 1: " + (hist1 != null ? hist1 : "Not Provided"));
+    //     System.out.println("Histogram Column 2: " + (hist2 != null ? hist2 : "Not Provided"));
 
-        // Create the output directory if it doesn't exist
-        File outputDir = new File(outputDirectory);
-        if (!outputDir.exists()) {
-            outputDir.mkdirs();
-        }
+    //     // Create the output directory if it doesn't exist
+    //     File outputDir = new File(outputDirectory);
+    //     if (!outputDir.exists()) {
+    //         outputDir.mkdirs();
+    //     }
 
-        // String[] cols = {
-        //     "NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
-        // };
+    //     // String[] cols = {
+    //     //     "NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
+    //     // };
 
-        try {
-            // Get the data from the CSV file
-            List<CSVRecord> dataRows = utils.readCsv(csvFilePath, 4);
+    //     try {
+    //         // Get the data from the CSV file
+    //         List<CSVRecord> dataRows = utils.readCsv(csvFilePath, 3);
 
-            // If histogram, then plot histogram instead of line plot
-            if (hist1 != null) {
-                // for (int i = 0; i < cols.length; i++) {
-                //     createAndSaveHistogram(dataRows, cols[i], outputDirectory + File.separator + "hist_" + cols[i]);
-                //     for (int j = i+1; j < cols.length; j++) {
-                //         if (hist2 != null) {
-                //             // createAndSaveHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
-                //             if (cols[i] != cols[j]) createAndSaveHeatmap(dataRows, cols[i], cols[j], outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
-                //         }
-                //     }
-                // }
-                createAndSaveHistogram(dataRows, hist1, outputDirectory + File.separator + "hist_" + hist1);
-                if (hist2 != null) {
-                    if (hist1 != hist2) createAndSaveHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
-                    createAndSaveHeatmap(dataRows, hist1, hist2, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
-                }
-            // Otherwise, assume the file contains Spot data and generate line plots.
-            } else {
-                Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
-                for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-                    Integer trackId = entry.getKey();
-                    List<CSVRecord> rows = entry.getValue();
-                    JPanel chartPanel = createChartPanel(trackId, rows);
-                    saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    //         // If histogram, then plot histogram instead of line plot
+    //         if (hist1 != null) {
+    //             // for (int i = 0; i < cols.length; i++) {
+    //             //     JPanel chartPanel = plotHistogram(dataRows, cols[i], outputDirectory + File.separator + "hist_" + cols[i]);
+    //             //     saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + cols[i]);
+    //             //     if (hist2 != null) {
+    //             //         for (int j = i+1; j < cols.length; j++) {
+    //             //             if (cols[i] != cols[j]) {
+    //             //                 chartPanel = plotHeatmap(dataRows, cols[i], cols[j], outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
+    //             //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
+    //             //             }
+    //             //         }
+    //             //     }
+    //             // }
+    //             JPanel chartPanel = plotHistogram(dataRows, hist1, outputDirectory + File.separator + "hist_" + hist1);
+    //             saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + hist1);
+    //             if (hist2 != null) {
+    //                 if (hist1 != hist2) {
+    //                     chartPanel = plotHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
+    //                     saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + hist2);
+    //                 }
+    //                 chartPanel = plotHeatmap(dataRows, hist1, hist2, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
+    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
+    //             }
+    //         // Otherwise, assume the file contains Spot data and generate line plots.
+    //         } else {
+    //             Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
+    //             for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+    //                 Integer trackId = entry.getKey();
+    //                 List<CSVRecord> rows = entry.getValue();
+    //                 JPanel chartPanel = createChartPanel(trackId, rows);
+    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+    //             }
+    //         }
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 
     /**
      * Display the chart panel as an ImagePlus window.
@@ -174,6 +181,10 @@ public class Plots implements Runnable {
      * @return JPanel containing the chart
      */
     public static JPanel createChartPanel(Integer trackId, List<CSVRecord> rows) {
+        // Dimensions
+        int width = 1600;
+        int height = 1600;
+
         // Sort the rows by FRAME
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
@@ -184,7 +195,7 @@ public class Plots implements Runnable {
         List<Double> intensityData = rows.stream().map(row -> Double.parseDouble(row.get("MEDIAN_INTENSITY_CH1"))).collect(Collectors.toList());
 
         // Create the first chart (POSITION_X vs POSITION_Y)
-        XYChart chart1 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
+        XYChart chart1 = new XYChartBuilder().width(width).height(height/2).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
                 .xAxisTitle("POSITION_X").yAxisTitle("POSITION_Y").build();
         XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
         chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
@@ -192,7 +203,7 @@ public class Plots implements Runnable {
         series1.setLineStyle(SeriesLines.SOLID);
 
         // Create the second chart (POSITION_T vs MEDIAN_INTENSITY_CH1)
-        XYChart chart2 = new XYChartBuilder().width(1600).height(800).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
+        XYChart chart2 = new XYChartBuilder().width(width).height(height/2).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
                 .xAxisTitle("POSITION_T").yAxisTitle("MEDIAN_INTENSITY_CH1").build();
         XYSeries series2 = chart2.addSeries("Track " + trackId, timeData, intensityData);
         chart2.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
@@ -215,24 +226,26 @@ public class Plots implements Runnable {
      * @param yFeature The feature to plot on the y-axis
      * @return JPanel containing the chart
      */
-    public static JPanel plotFeatures(Integer trackId , List<CSVRecord> rows, String xFeature, String yFeature) {
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature) {
+        // Dimensions
+        int width = 1600;
+        int height = 1000;
+    
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
         List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get(xFeature))).collect(Collectors.toList());
         List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
 
         // Create the chart with the specified features
-        XYChart chart1 = new XYChartBuilder().width(1600).height(800).title(
+        XYChart chart = new XYChartBuilder().width(width).height(height).title(
                 "Track ID: " + trackId + " (" + xFeature + " vs " + yFeature + ")"
                 ).xAxisTitle(xFeature).yAxisTitle(yFeature).build();
-        XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
-        series1.setMarker(SeriesMarkers.NONE);
-        series1.setLineStyle(SeriesLines.SOLID);
+        XYSeries series = chart.addSeries("Track " + trackId, xData, yData);
+        series.setMarker(SeriesMarkers.NONE);
+        series.setLineStyle(SeriesLines.SOLID);
 
-        // Combine the charts into a single panel
-        JPanel chartPanel = new JPanel(new GridLayout(1, 1));
-        chartPanel.add(new XChartPanel<>(chart1));
-        return chartPanel;
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
     }
 
     /**
@@ -243,8 +256,11 @@ public class Plots implements Runnable {
      * @return JPanel containing the chart
      */
     public static JPanel plotTracksFeatures(List<Integer> trackIds, List<CSVRecord> rows, String feature) {
+        // Dimensions
+        int width = 1600;
+        int height = 1000;
+
         // Plot the feature for each track (track id is x, feature is y)
-        // Use CategoryChart for discrete x-axis values
         Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(rows);
         List<Double> xData = new ArrayList<>();
         List<Double> yData = new ArrayList<>();
@@ -254,24 +270,23 @@ public class Plots implements Runnable {
                 xData.add((double) trackId);
                 yData.add(Double.parseDouble(trackData.get(0).get(feature)));
             }
+            System.out.println(trackData);
         }
 
-        // Create the chart with the specified feature
-        CategoryChart chart1 = new CategoryChartBuilder().width(1600).height(800).title(
+        // Create the CategoryChart (discrete features) with the specified feature
+        CategoryChart chart = new CategoryChartBuilder().width(width).height(height).title(
                 "Track IDs vs " + feature
         ).xAxisTitle("Track ID").yAxisTitle(feature).build();
-        chart1.getStyler().setXAxisLabelRotation(90);
-        chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
-        chart1.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Stick);
-        chart1.getStyler().setXAxisTickMarkSpacingHint(10);
+        chart.getStyler().setXAxisLabelRotation(90);
+        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
+        chart.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Stick);
+        chart.getStyler().setXAxisTickMarkSpacingHint(10);
 
-        CategorySeries series1 = chart1.addSeries(feature, xData, yData);
-        series1.setMarker(SeriesMarkers.CIRCLE);
-        // rotate the x-axis labels
+        CategorySeries series = chart.addSeries(feature, xData, yData);
+        series.setMarker(SeriesMarkers.CIRCLE);
 
-        JPanel chartPanel = new JPanel(new GridLayout(1, 1));
-        chartPanel.add(new XChartPanel<>(chart1));
-        return chartPanel;
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
     }
 
     /**
@@ -281,8 +296,10 @@ public class Plots implements Runnable {
      * @throws IOException If an error occurs while saving the file
      */
     public static void saveChartPanelAsPNG(JPanel chartPanel, String filePath) throws IOException {
-        int width = chartPanel.getWidth();
-        int height = chartPanel.getHeight();
+        // getPreferredSize() takes into account the contents of chartPanel to compute a minimum size
+        int width = (int) chartPanel.getPreferredSize().getWidth();
+        int height = (int) chartPanel.getPreferredSize().getHeight();
+
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
 
@@ -314,19 +331,23 @@ public class Plots implements Runnable {
      * @param filePath Path to the output file
      * @throws IOException If an error occurs while saving the file
      */
-    public static void createAndSaveHistogram(List<CSVRecord> dataRows, String columnName, String filePath) throws IOException {
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, String filePath) throws IOException {
+        // Dimensions
+        int width = 1600;
+        int height = 1000;
+
         // Extract data for the histogram
         List<Double> columnData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnName))).collect(Collectors.toList());
 
         // Create the histogram chart
         Histogram histogram = new Histogram(columnData, 50);
-        CategoryChart chart = new CategoryChartBuilder().width(1600).height(1000).title("Histogram of " + columnName).xAxisTitle(columnName).yAxisTitle("Frequency").build();
+        CategoryChart chart = new CategoryChartBuilder().width(width).height(height).title("Histogram of " + columnName).xAxisTitle(columnName).yAxisTitle("Frequency").build();
         chart.addSeries(columnName, histogram.getxAxisData(), histogram.getyAxisData());
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         chart.getStyler().setXAxisLabelRotation(90);
 
-        // Save the chart as a PNG file
-        BitmapEncoder.saveBitmap(chart, filePath, BitmapEncoder.BitmapFormat.PNG);
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
     }
 
     /**
@@ -337,7 +358,11 @@ public class Plots implements Runnable {
      * @param filePath Path to the output file
      * @throws IOException If an error occurs while saving the file
      */
-    public static void createAndSaveHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, String filePath) throws IOException {
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, String filePath) throws IOException {
+        // Dimensions
+        int width = 1600;
+        int height = 1600;
+
         // Extract data for the heatmap
         List<Double> xData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnX))).collect(Collectors.toList());
         List<Double> yData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnY))).collect(Collectors.toList());
@@ -357,14 +382,14 @@ public class Plots implements Runnable {
         for (int i = 0; i < xData.size(); i++) {
             int xBin = (int) ((xData.get(i) - xMin) / xBinSize);
             int yBin = (int) ((yData.get(i) - yMin) / yBinSize);
-            
+
             // Edge case: include maximum
             if (xBin == numBinsX) xBin--;
             if (yBin == numBinsY) yBin--;
-    
+
             bins[yBin][xBin]++;
         }
-    
+
         // Compute bin edges for display
         List<Double> xBins = new ArrayList<>();
         List<Double> yBins = new ArrayList<>();
@@ -378,14 +403,14 @@ public class Plots implements Runnable {
                 if (bins[j][i] != 0) zData.add(new Number[]{i, j, bins[j][i]});
             } 
         }
-    
+
         // Create and configure the heatmap chart
-        HeatMapChart chart = new HeatMapChartBuilder().width(1600).height(1000).title("Heatmap of " + columnX + " vs " + columnY)
+        HeatMapChart chart = new HeatMapChartBuilder().width(width).height(height).title("Heatmap of " + columnX + " vs " + columnY)
                 .xAxisTitle(columnX).yAxisTitle(columnY).build();
         chart.addSeries("heatmap", xBins, yBins, zData);
         chart.getStyler().setXAxisLabelRotation(90);
-    
-        // Save the heatmap as a PNG file
-        BitmapEncoder.saveBitmap(chart, filePath, BitmapEncoder.BitmapFormat.PNG);
+
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
     }
 }
