@@ -309,10 +309,7 @@ public class Replisome_Analysis implements Command {
 					// Assign tracks to colonies and save the results
 					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension); //not sure if this works
 				}
-
-
-
-
+				
 				/*
 				 * Example of how to access features for a track
 				 * See other accessible features in Colonies' setColumnMapping
