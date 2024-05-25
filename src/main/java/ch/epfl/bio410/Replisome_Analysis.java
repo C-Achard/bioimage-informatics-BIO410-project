@@ -381,12 +381,88 @@ public class Replisome_Analysis implements Command {
 				System.out.print(a);
 
 
+
+
+
+				// Plot the analysis
+				// Load the results
+				String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
+				File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+				String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
+				File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
+
+				String plotSavePath = Paths.get(path, "results").toString();
+				// Create the "plots" folder and update the path
+				File plotsFolder = Paths.get(path, "results", "plots").toFile();
+				if (!plotsFolder.exists()) {
+					if (plotsFolder.mkdir()) {
+						IJ.log("Directory 'plots' is created!");
+					} else {
+						IJ.log("Failed to create directory 'plots'!");
+						throw new RuntimeException("Failed to create plots directory. Aborting.");
+					}
+				}
+				plotSavePath = Paths.get(path, "results", "plots").toString();
+				// Plot the analysis
+				try {
+					List<CSVRecord> dataRows = utils.readCsv(csvTracksPath,3);  // 3 right?
+		//			List<CSVRecord> dataRows = utils.readCsv(csvSpotsPath);
+					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
+
+					JPanel chartPanelTracks = Plots.plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
+					//JPanel chartPanelPos = Plots.plotFeatures(1, groupedData.get(1), "TRACK_X_LOCATION", "TRACK_Y_LOCATION");
+
+					// Save plots
+					Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
+					//Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
+					// Show plots
+					Plots.showSavedPlot(plotSavePath + File.separator + "plot_tracks.png");
+					//Plots.showSavedPlot(plotSavePath + File.separator + "plot_pos.png");
+
+//				for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+//					Integer trackId = entry.getKey();
+//					List<CSVRecord> rows = entry.getValue();
+//					JPanel chartPanel = Plots.createChartPanel(trackId, rows);
+//					Plots.displayChartAsImagePlus(chartPanel);
+//					String savePath = plotSavePath + File.separator + "plot_" + trackId + ".png";
+//					Plots.saveChartPanelAsPNG(chartPanel, savePath);
+//					Plots.showSavedPlot(savePath);
+//					break;
+//				}
+
+					// Show in ImageJ
+//				Plots.displayChartAsImagePlus(chartPanelPos);
+//				Plots.displayChartAsImagePlus(chartPanelTracks);
+					// Save the chart panels as PNG files
+//				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
+//				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
+
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+
+
+
+
+
+
+
+
+
+
 				IJ.log("All done!");
 
 			}
 			else{
 				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");
 			}
+
+
+
+
+
+
 		}
     }
 
