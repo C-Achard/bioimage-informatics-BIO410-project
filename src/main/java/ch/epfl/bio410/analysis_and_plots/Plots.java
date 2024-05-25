@@ -27,13 +27,9 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
-// import javax.imageio.ImageWriter;
-// import javax.imageio.spi.IIORegistry;
-// import javax.imageio.spi.ImageWriterSpi;
 import javax.swing.*;
 
 import static ij.IJ.openImage;
-// import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
 @Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
         description = "Processes a CSV file and generates plots.")
