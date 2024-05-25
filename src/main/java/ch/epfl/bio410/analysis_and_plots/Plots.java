@@ -1,4 +1,3 @@
-// TODO : find suitable library for plotting and implement plots
 package ch.epfl.bio410.analysis_and_plots;
 
 import picocli.CommandLine;
@@ -14,14 +13,11 @@ import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.knowm.xchart.style.lines.SeriesLines;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -29,8 +25,14 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import ch.epfl.bio410.utils.utils;
+
 import static ij.IJ.openImage;
 
+/**
+ * Class for generation of plots, from CSV files or existing dataframes.
+ * Already implemented: feature-feature line plots, feature histograms and feature-feature heatmaps.
+ */
 @Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
         description = "Processes a CSV file and generates plots.")
 public class Plots implements Runnable {
@@ -47,19 +49,28 @@ public class Plots implements Runnable {
     @Option(names = {"-y"}, description = "Column name 2 for the histogram")
     private String hist2;
 
+    /**
+     * Command-line implementation for easier debugging.
+     * @param args Command-line arguments: CSV file, output dir (optional), features to plot (optional)
+     */
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Plots()).execute(args);
         System.exit(exitCode);
     }
 
+    /**
+     * Arguments passed to main() are then used in run() to run and test the code.
+     */
     @Override
     public void run() {
+        // If output not specified, set output directory based on input file
         if (outputDirectory == null) {
             File csvFile = new File(csvFilePath);
             String baseName = csvFile.getName().substring(0, csvFile.getName().lastIndexOf('.'));
             outputDirectory = csvFile.getParent() + File.separator + baseName;
         }
 
+        // Debugging: have the arguments been handled correctly?
         System.out.println("CSV File Path: " + csvFilePath);
         System.out.println("Output Directory: " + outputDirectory);
         System.out.println("Histogram Column 1: " + (hist1 != null ? hist1 : "Not Provided"));
@@ -76,7 +87,10 @@ public class Plots implements Runnable {
         // };
 
         try {
-            List<CSVRecord> dataRows = readCsv(csvFilePath);
+            // Get the data from the CSV file
+            List<CSVRecord> dataRows = utils.readCsv(csvFilePath, 4);
+
+            // If histogram, then plot histogram instead of line plot
             if (hist1 != null) {
                 // for (int i = 0; i < cols.length; i++) {
                 //     createAndSaveHistogram(dataRows, cols[i], outputDirectory + File.separator + "hist_" + cols[i]);
@@ -92,6 +106,7 @@ public class Plots implements Runnable {
                     if (hist1 != hist2) createAndSaveHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
                     createAndSaveHeatmap(dataRows, hist1, hist2, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
                 }
+            // Otherwise, assume the file contains Spot data and generate line plots.
             } else {
                 Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
                 for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
@@ -105,6 +120,7 @@ public class Plots implements Runnable {
             e.printStackTrace();
         }
     }
+
     /**
      * Display the chart panel as an ImagePlus window.
      * @param chartPanel The chart panel to display
@@ -142,26 +158,26 @@ public class Plots implements Runnable {
         imagePlus.show();
     }
 
-    public static List<CSVRecord> readCsv(String csvFilePath) throws IOException {
-        try (FileReader reader = new FileReader(csvFilePath);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
-        }
-    }
-    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
-        try (FileReader reader = new FileReader(csvFile);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
-        }
-    }
-
+    /**
+     * Groups the data rows by TRACK_ID.
+     * @param dataRows List of CSV records
+     * @return Map where key is TRACK_ID and value is list of records with that TRACK_ID
+     */
     public static Map<Integer, List<CSVRecord>> groupByTrackId(List<CSVRecord> dataRows) {
         return dataRows.stream().collect(Collectors.groupingBy(row -> Integer.parseInt(row.get("TRACK_ID"))));
     }
 
+    /**
+     * Creates a chart panel with XY plots for the specified track.
+     * @param trackId The ID of the track
+     * @param rows List of CSV records for the track
+     * @return JPanel containing the chart
+     */
     public static JPanel createChartPanel(Integer trackId, List<CSVRecord> rows) {
+        // Sort the rows by FRAME
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
+        // Extract data for the plots
         List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_X"))).collect(Collectors.toList());
         List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_Y"))).collect(Collectors.toList());
         List<Double> timeData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_T"))).collect(Collectors.toList());
@@ -182,9 +198,6 @@ public class Plots implements Runnable {
         chart2.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         series2.setMarker(SeriesMarkers.NONE);
         series2.setLineStyle(SeriesLines.SOLID);
-
-//        displayChartAsImagePlus(chart1);
-//        displayChartAsImagePlus(chart2);
 
         // Combine the charts into a single panel
         JPanel chartPanel = new JPanel(new GridLayout(2, 1));
@@ -260,153 +273,119 @@ public class Plots implements Runnable {
         chartPanel.add(new XChartPanel<>(chart1));
         return chartPanel;
     }
+
     /**
      * Save the chart panel as a PNG file.
      * @param chartPanel The chart panel to save
-     * @param filePath The path to save the PNG file
+     * @param filePath Path to the output file
      * @throws IOException If an error occurs while saving the file
      */
     public static void saveChartPanelAsPNG(JPanel chartPanel, String filePath) throws IOException {
-        int width = (int) chartPanel.getPreferredSize().getWidth();
-        int height = (int) chartPanel.getPreferredSize().getHeight();
+        int width = chartPanel.getWidth();
+        int height = chartPanel.getHeight();
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
+
         // Ensure the panel is fully rendered before capturing
         chartPanel.setSize(width, height);
         chartPanel.doLayout();
         chartPanel.print(g2);
-
         g2.dispose();
-
+        
         ImageIO.write(image, "png", new File(filePath + ".png"));
     }
+
+    /**
+     * Display the file in ImageJ.
+     * Not used in this file, but useful method for integration with ImageJ.
+     * @param filePath Path to the image file
+     * @return ImagePlus object for further manipulation with ImageJ
+     */
     public static ImagePlus showSavedPlot(String filePath) {
         ImagePlus imp = openImage(filePath);
         imp.show();
         return imp;
     }
 
-    public static void createAndSaveHistogram(List<CSVRecord> dataRows, String column, String filePath) throws IOException {
-        double[] values = dataRows.stream().mapToDouble(row -> Double.parseDouble(row.get(column))).toArray();
-
-        Histogram histogram = new Histogram(values, 50);
+    /**
+     * Creates a histogram for the specified column and saves it as a PNG file.
+     * @param dataRows List of CSV records
+     * @param columnName Name of the column
+     * @param filePath Path to the output file
+     * @throws IOException If an error occurs while saving the file
+     */
+    public static void createAndSaveHistogram(List<CSVRecord> dataRows, String columnName, String filePath) throws IOException {
+        // Extract data for the histogram
+        List<Double> columnData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnName))).collect(Collectors.toList());
 
         // Create the histogram chart
-        CategoryChart chart = new CategoryChartBuilder().width(1610).height(1000).title("Histogram of " + column)
-                .xAxisTitle(column).yAxisTitle("Frequency").build();
+        Histogram histogram = new Histogram(columnData, 50);
+        CategoryChart chart = new CategoryChartBuilder().width(1600).height(1000).title("Histogram of " + columnName).xAxisTitle(columnName).yAxisTitle("Frequency").build();
+        chart.addSeries(columnName, histogram.getxAxisData(), histogram.getyAxisData());
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         chart.getStyler().setXAxisLabelRotation(90);
-        chart.addSeries(column, histogram.getx(), Arrays.stream(histogram.gety()).asDoubleStream().toArray());
 
-        // Save the chart as a TIFF file
-        BufferedImage image = new BufferedImage(chart.getWidth(), chart.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = image.createGraphics();
-        chart.paint(g2, 1610, 1000);
-        g2.dispose();
-        ImageIO.write(image, "png", new File(filePath + ".png"));
+        // Save the chart as a PNG file
+        BitmapEncoder.saveBitmap(chart, filePath, BitmapEncoder.BitmapFormat.PNG);
     }
 
-    static class Histogram {
-        private final double[] xAxisData;
-        private final int[] yAxisData;
-
-        public Histogram(double[] values, int numBins) {
-            double min = Arrays.stream(values).min().getAsDouble();
-            double max = Arrays.stream(values).max().getAsDouble();
-            double binWidth = max != min ? (max - min) / numBins : 1 / numBins;
-
-            xAxisData = new double[numBins];
-            yAxisData = new int[numBins];
-
-            for (int i = 0; i < numBins; i++) {
-                xAxisData[i] = min + i * binWidth;
-            }
-
-            for (double value : values) {
-                int bin = (int) ((value - min) / binWidth);
-                // Edge case: include maximum
-                if (bin == numBins) {
-                    bin--;
-                }
-                yAxisData[bin]++;
-            }
-        }
-
-        public double[] getx() {
-            return xAxisData;
-        }
-
-        public int[] gety() {
-            return yAxisData;
-        }
-    }
-
+    /**
+     * Creates a heatmap for the specified columns and saves it as a PNG file.
+     * @param dataRows List of CSV records
+     * @param columnX Name of the X column
+     * @param columnY Name of the Y column
+     * @param filePath Path to the output file
+     * @throws IOException If an error occurs while saving the file
+     */
     public static void createAndSaveHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, String filePath) throws IOException {
-        // Number of bins for the histogram
-        int numBinsX = 50;
-        int numBinsY = 50;
-    
-        // Extract the data for the specified columns
+        // Extract data for the heatmap
         List<Double> xData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnX))).collect(Collectors.toList());
         List<Double> yData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnY))).collect(Collectors.toList());
-    
-        // Find min and max values for the columns
-        Double minX = xData.stream().min(Double::compareTo).orElse(0.0);
-        Double maxX = xData.stream().max(Double::compareTo).orElse(1.0);
-        Double minY = yData.stream().min(Double::compareTo).orElse(0.0);
-        Double maxY = yData.stream().max(Double::compareTo).orElse(1.0);
-    
-        // Define bin width
-        Double binWidthX = (maxX - minX) / numBinsX;
-        Double binWidthY = (maxY - minY) / numBinsY;
-    
-        // Initialize the 2D array to count occurrences
-        Integer[][] zDataSparse = new Integer[numBinsY][numBinsX];
-        for (Integer[] row: zDataSparse) {
-            Arrays.fill(row, 0);
-        }
-    
-        // Count occurrences within bins
+
+        // Create a 2D histogram for the heatmap
+        int numBinsX = 50;
+        int numBinsY = 50;
+        int[][] bins = new int[numBinsY][numBinsX];
+        double xMin = Collections.min(xData);
+        double xMax = Collections.max(xData);
+        double yMin = Collections.min(yData);
+        double yMax = Collections.max(yData);
+        double xBinSize = (xMax - xMin) / numBinsX;
+        double yBinSize = (yMax - yMin) / numBinsY;
+
+        // Sort values into bins
         for (int i = 0; i < xData.size(); i++) {
-            int xBin = (int) ((xData.get(i) - minX) / binWidthX);
-            int yBin = (int) ((yData.get(i) - minY) / binWidthY);
+            int xBin = (int) ((xData.get(i) - xMin) / xBinSize);
+            int yBin = (int) ((yData.get(i) - yMin) / yBinSize);
             
             // Edge case: include maximum
             if (xBin == numBinsX) xBin--;
             if (yBin == numBinsY) yBin--;
     
-            zDataSparse[yBin][xBin]++;
+            bins[yBin][xBin]++;
         }
     
-        // Create the bin edges
+        // Compute bin edges for display
         List<Double> xBins = new ArrayList<>();
         List<Double> yBins = new ArrayList<>();
-        for (int i = 0; i <= numBinsX; i++) {
-            xBins.add(minX + i * binWidthX);
-        }
-        for (int i = 0; i <= numBinsY; i++) {
-            yBins.add(minY + i * binWidthY);
-        }
+        for (int i = 0; i <= numBinsX; i++) xBins.add(xMin + i * xBinSize);
+        for (int i = 0; i <= numBinsY; i++) yBins.add(yMin + i * yBinSize);
 
+        // Change bins (sparse matrix) into list of (coordinates + value) for display
         List<Number[]> zData = new ArrayList<Number[]>();
         for (Integer j = 0; j < numBinsY; j++) {
             for (Integer i = 0; i < numBinsX; i++) {
-                if (zDataSparse[j][i] != 0) {
-                    zData.add(new Number[]{i, j, zDataSparse[j][i]});
-                }
+                if (bins[j][i] != 0) zData.add(new Number[]{i, j, bins[j][i]});
             } 
         }
     
         // Create and configure the heatmap chart
-        HeatMapChart chart = new HeatMapChartBuilder().width(1610).height(1000).title("Heatmap of " + columnX + " vs " + columnY).xAxisTitle(columnX).yAxisTitle(columnY).build();
+        HeatMapChart chart = new HeatMapChartBuilder().width(1600).height(1000).title("Heatmap of " + columnX + " vs " + columnY)
+                .xAxisTitle(columnX).yAxisTitle(columnY).build();
         chart.addSeries("heatmap", xBins, yBins, zData);
         chart.getStyler().setXAxisLabelRotation(90);
     
         // Save the heatmap as a PNG file
-        BufferedImage image = new BufferedImage(chart.getWidth(), chart.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = image.createGraphics();
-        chart.paint(g2, chart.getWidth(), chart.getHeight());
-        g2.dispose();
-        ImageIO.write(image, "png", new File(filePath + ".png"));
+        BitmapEncoder.saveBitmap(chart, filePath, BitmapEncoder.BitmapFormat.PNG);
     }
 }

@@ -3,13 +3,22 @@ package ch.epfl.bio410;
 import java.awt.*;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
+import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import ch.epfl.bio410.analysis_and_plots.Results;
-import ch.epfl.bio410.segmentation.Colonies;
-import ch.epfl.bio410.utils.TrackingConfig;
+import org.apache.commons.csv.CSVRecord;
+import org.scijava.command.Command;
+import org.scijava.plugin.Plugin;
+import javax.swing.*;
+
+import net.imagej.ImageJ;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import ij.IJ;
@@ -17,19 +26,15 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 
-import net.imagej.ImageJ;
-import org.apache.commons.csv.CSVRecord;
-import org.scijava.command.Command;
-import org.scijava.plugin.Plugin;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
+import ch.epfl.bio410.utils.TrackingConfig;
 import ch.epfl.bio410.segmentation.segmentation;
+import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.Tracking;
+import ch.epfl.bio410.analysis_and_plots.Analysis;
+import ch.epfl.bio410.analysis_and_plots.Plots;
+import ch.epfl.bio410.analysis_and_plots.Results;
 import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
 
 
