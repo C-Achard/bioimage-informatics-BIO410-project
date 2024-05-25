@@ -181,10 +181,8 @@ public class Colonies {
     this.colonyLabels.setLut(this.glasbeyLUT);
 
     // save pixel width "metadata" to ColonyLabels image too
-    this.colonyLabels.getCalibration().setXUnit("µm");
-    double pixelWidth = this.imageDIC.getCalibration().pixelWidth;
-    double pixelHeight = this.imageDIC.getCalibration().pixelHeight;
-    IJ.run(this.colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+        utils.add_pixel_size(colonyLabels, imageDIC);
+
 
         if (keepVoronoi) {
         this.voronoiDiagrams = new ImagePlus("Voronoi Diagrams", this.voronoiDiagramStack);

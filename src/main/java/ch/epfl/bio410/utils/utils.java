@@ -62,6 +62,11 @@ public class utils {
         return new LUT(r, g, b);
     }
 
+    /**
+     * This method removes noise from the image by applying a median filter
+     * @param imp contains the pixel data of the image and some basic methods to manipulate it.
+     * @return the processed image as an ImagePlus
+     */
     public static ImagePlus remove_noise(ImagePlus imp, double sigma) {
         //imp.show();
         /* Subtract Background but segmentation actually works best without subtracting background
@@ -97,6 +102,12 @@ public class utils {
 
     }
 
+
+    /**
+     * This method reads a CSV file and returns a list of lists of strings
+     * @param path is the path to the CSV file
+     * @return a list of lists of strings
+     */
     public static List<List<String>> read_csv(String path){
         List<List<String>> records = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
@@ -111,6 +122,13 @@ public class utils {
         return records;
     }
 
+    /**
+     * This method reads a CSV file and returns a list of CSVRecords
+     * @param csvFilePath is the path to the CSV file
+     * @param skipped_lines is the number of lines to skip at the beginning of the file
+     * @return a list of CSVRecords
+     * @throws IOException
+     */
     public static List<CSVRecord> readCsv(String csvFilePath, int skipped_lines) throws IOException {
         try (FileReader reader = new FileReader(csvFilePath);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
@@ -124,5 +142,17 @@ public class utils {
         }
     }
 
+
+    /**
+     * This method adds the pixel size for original image (width and height) to the image properties
+     * @param colonyLabels is the image to which we want to add the pixel size
+     * @param imageDIC is the image from which we want to get the pixel size
+     */
+    public static void add_pixel_size(ImagePlus colonyLabels, ImagePlus imageDIC){
+        colonyLabels.getCalibration().setXUnit("µm");
+        double pixelWidth = imageDIC.getCalibration().pixelWidth;
+        double pixelHeight = imageDIC.getCalibration().pixelHeight;
+        IJ.run(colonyLabels, "Properties...", "channels=1 slices=120 frames=1 pixel_width="+pixelWidth+" pixel_height="+pixelHeight+" voxel_depth=1.0");
+    }
 
 }
