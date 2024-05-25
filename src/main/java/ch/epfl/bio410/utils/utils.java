@@ -158,44 +158,28 @@ public class utils {
     }
 
     /**
-     * This method reads a CSV file and returns a list of lists of strings
-     * @param path is the path to the CSV file
-     * @return a list of lists of strings
+     * Reads a CSV file and returns a list of CSV records (columns).
+     * @param csvFilePath Path to the CSV file
+     * @return List of CSV records
+     * @throws IOException If an error occurs while reading the file
      */
-    public static List<List<String>> read_csv(String path){
-        List<List<String>> records = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
-                records.add(Arrays.asList(values));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return records;
+    public static List<CSVRecord> readCsv(String csvFilePath, int skipped_lines) throws IOException {
+        return readCsv(new File(csvFilePath), skipped_lines);
     }
 
     /**
-     * This method reads a CSV file and returns a list of CSVRecords
-     * @param csvFilePath is the path to the CSV file
-     * @param skipped_lines is the number of lines to skip at the beginning of the file
-     * @return a list of CSVRecords
-     * @throws IOException
+     * Reads a CSV file and returns a list of CSV records (columns).
+     * @param csvFilePath File containing CSV data
+     * @return List of CSV records
+     * @throws IOException If an error occurs while reading the file
      */
-    public static List<CSVRecord> readCsv(String csvFilePath, int skipped_lines) throws IOException {
-        try (FileReader reader = new FileReader(csvFilePath);
+    public static List<CSVRecord> readCsv(File csvFile, int skipped_lines) throws IOException {
+        try (FileReader reader = new FileReader(csvFile);
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            // Skip the first n-1 lines (header) and collect the remaining records
             return csvParser.getRecords().stream().skip(skipped_lines).collect(Collectors.toList());
         }
     }
-    public static List<CSVRecord> readCsv(File csvFile) throws IOException {
-        try (FileReader reader = new FileReader(csvFile);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            return csvParser.getRecords().stream().skip(3).collect(Collectors.toList());
-        }
-    }
-
 
     /**
      * This method adds the pixel size for original image (width and height) to the image properties

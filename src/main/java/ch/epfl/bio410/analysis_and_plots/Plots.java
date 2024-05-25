@@ -13,20 +13,19 @@ import org.knowm.xchart.*;
 import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.knowm.xchart.style.lines.SeriesLines;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+
+import ch.epfl.bio410.utils.utils;
 
 import static ij.IJ.openImage;
 
@@ -89,7 +88,7 @@ public class Plots implements Runnable {
 
         try {
             // Get the data from the CSV file
-            List<CSVRecord> dataRows = readCsv(csvFilePath, 4);
+            List<CSVRecord> dataRows = utils.readCsv(csvFilePath, 4);
 
             // If histogram, then plot histogram instead of line plot
             if (hist1 != null) {
@@ -157,30 +156,6 @@ public class Plots implements Runnable {
 
         // Display the ImagePlus
         imagePlus.show();
-    }
-
-    /**
-     * Reads a CSV file and returns a list of CSV records (columns).
-     * @param csvFilePath Path to the CSV file
-     * @return List of CSV records
-     * @throws IOException If an error occurs while reading the file
-     */
-    public static List<CSVRecord> readCsv(String csvFilePath, int skip) throws IOException {
-        return readCsv(new File(csvFilePath), skip);
-    }
-
-    /**
-     * Reads a CSV file and returns a list of CSV records (columns).
-     * @param csvFilePath File containing CSV data
-     * @return List of CSV records
-     * @throws IOException If an error occurs while reading the file
-     */
-    public static List<CSVRecord> readCsv(File csvFile, int skip) throws IOException {
-        try (FileReader reader = new FileReader(csvFile);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            // Skip the first n-1 lines (header) and collect the remaining records
-            return csvParser.getRecords().stream().skip(skip-1).collect(Collectors.toList());
-        }
     }
 
     /**
