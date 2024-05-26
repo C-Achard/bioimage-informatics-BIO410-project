@@ -363,10 +363,7 @@ public class Replisome_Analysis implements Command {
 				}
 
 				// Analysis : plot area per track //
-
-				// Load the tracks features with colony labels
-
-
+				
 				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
 					IJ.log("Fetching stats for tracks and colonies");
@@ -379,6 +376,7 @@ public class Replisome_Analysis implements Command {
 					List<CSVRecord> tracks_with_labels = null;
 					Results results = new Results();
 					try {
+					// Load the tracks features with colony labels
 						tracks_with_labels = utils.readCsv(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
@@ -416,12 +414,6 @@ public class Replisome_Analysis implements Command {
 			} else{
 				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");
 			}
-
-
-
-
-
-
 		}
     }
 
