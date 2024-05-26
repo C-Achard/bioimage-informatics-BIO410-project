@@ -73,6 +73,11 @@ See the [Plugin Usage](plugin_usage.md) page for more information on running the
 If you do not install clij2 manually, you may face some ClassNotFound issues.
 To solve this, install clij2 manually and restart ImageJ.
 
+### GUI window too big 
+
+If, when launching the plugin, the GUI window is too big (this can happen on 13 inch screen), and you cannot see the path browser or the OK button, there is an easy fix. Simply **decrease the GUI scale to ~ 0.7** and **change the Menu font size to 18 points** in Edit > Options > Apperance... 
+
+
 ## Data availability
 
 ### OMERO
