@@ -200,8 +200,8 @@ public class Colonies {
         Map<Integer, double[][]> stats = new HashMap<>();
         for (int i = 1; i <= labels.getStackSize(); i++) {
             ImageProcessor frame = channelDIC.getStack().getProcessor(i);
-            ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
-            double[][] sliceStats = getLabelStats(labels, slice);
+            ImageProcessor slice = labels.getStack().getProcessor(i);
+            double[][] sliceStats = getLabelStats(new ImagePlus("Slice", slice), new ImagePlus("DIC", frame));
             stats.put(i, sliceStats);
             IJ.log("Computed stats for frame " + i + "/" + labels.getStackSize());
         }
