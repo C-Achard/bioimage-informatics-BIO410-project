@@ -36,6 +36,15 @@ Various plots and statistics can then be generated from the data.
 
 ## Installation
 
+### Dependencies
+
+**First, install the following dependencies manually** :
+
+- cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues. 
+  Follow [this link](https://clij.github.io/clij2-docs/installationInFiji) to install clij2 in Fiji.
+
+### Install from .jar file
+
 To install the plugin, take the provided .jar file in GitHub Packages and place it in the plugins folder of your ImageJ installation.
 
 The plugin will then be available in the ImageJ menu under Plugins > Replisome Analysis.
