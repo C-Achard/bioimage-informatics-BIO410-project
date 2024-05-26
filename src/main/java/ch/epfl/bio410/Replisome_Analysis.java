@@ -363,7 +363,7 @@ public class Replisome_Analysis implements Command {
 				}
 
 				// Analysis : plot area per track //
-				
+
 				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
 					IJ.log("Fetching stats for tracks and colonies");
@@ -408,6 +408,10 @@ public class Replisome_Analysis implements Command {
 
 				// Analysis : plot area per track //
 
+				// Additional analysis //
+				// Goal 1 : show position of tracks : mean displacement, directionality
+				// Goal 2 : show mobility :  Speed, duration
+				// Goal 3 : compare mobility across images (and also colonies ?)
 
 				IJ.log("All done!");
 
