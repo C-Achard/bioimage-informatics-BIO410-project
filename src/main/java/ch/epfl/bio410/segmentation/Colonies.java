@@ -19,6 +19,7 @@ public class Colonies {
      * We first use connected components labeling to segment the image into touching bacteria with a unique label per colony.
      * Then, we expand these labels in the first frame with a Voronoi diagram to obtain a "region" for each colony.
      * Finally, over each frame, we assign a given group of bacteria to a colony if they are mainly in the same region of the Voronoi diagram.
+     * This is then repeated for each frame.
      */
     private ImagePlus imageDIC; // holds the original DIC image
     public ImagePlus voronoiDiagrams; // contains the Voronoi diagrams for each frame, if kept
@@ -45,6 +46,7 @@ public class Colonies {
 
     /**
      * This method sets the column mapping for the statistics table from CLIJ2.
+     * This should be used with this.colonyStats to access the statistics for each label.
      * Usage : stats[i][columnMapping.get("IDENTIFIER")];
      */
     private void setColumnMapping() {
@@ -84,6 +86,52 @@ public class Colonies {
         columnMapping.put("MEAN_DISTANCE_TO_CENTROID", 33);
         columnMapping.put("MAX_DISTANCE_TO_CENTROID", 34);
         columnMapping.put("MAX_MEAN_DISTANCE_TO_CENTROID_RATIO", 35);
+    }
+    /**
+     * This method returns the column mapping for the statistics table from CLIJ2.
+     * This should be used with this.colonyStats to access the statistics for each label.
+     * Example : stats[i][columnMapping.get("IDENTIFIER")];
+     * @return Map<String, Integer> containing the column mapping
+     */
+    public static Map<String, Integer> getColumnMapping() {
+        Map<String, Integer> columnMapping = new HashMap<>();
+        columnMapping.put("IDENTIFIER", 0);
+        columnMapping.put("BOUNDING_BOX_X", 1);
+        columnMapping.put("BOUNDING_BOX_Y", 2);
+        columnMapping.put("BOUNDING_BOX_Z", 3);
+        columnMapping.put("BOUNDING_BOX_END_X", 4);
+        columnMapping.put("BOUNDING_BOX_END_Y", 5);
+        columnMapping.put("BOUNDING_BOX_END_Z", 6);
+        columnMapping.put("BOUNDING_BOX_WIDTH", 7);
+        columnMapping.put("BOUNDING_BOX_HEIGHT", 8);
+        columnMapping.put("BOUNDING_BOX_DEPTH", 9);
+        columnMapping.put("MINIMUM_INTENSITY", 10);
+        columnMapping.put("MAXIMUM_INTENSITY", 11);
+        columnMapping.put("MEAN_INTENSITY", 12);
+        columnMapping.put("SUM_INTENSITY", 13);
+        columnMapping.put("STANDARD_DEVIATION_INTENSITY", 14);
+        columnMapping.put("PIXEL_COUNT", 15);
+        columnMapping.put("SUM_INTENSITY_TIMES_X", 16);
+        columnMapping.put("SUM_INTENSITY_TIMES_Y", 17);
+        columnMapping.put("SUM_INTENSITY_TIMES_Z", 18);
+        columnMapping.put("MASS_CENTER_X", 19);
+        columnMapping.put("MASS_CENTER_Y", 20);
+        columnMapping.put("MASS_CENTER_Z", 21);
+        columnMapping.put("SUM_X", 22);
+        columnMapping.put("SUM_Y", 23);
+        columnMapping.put("SUM_Z", 24);
+        columnMapping.put("CENTROID_X", 25);
+        columnMapping.put("CENTROID_Y", 26);
+        columnMapping.put("CENTROID_Z", 27);
+        columnMapping.put("SUM_DISTANCE_TO_MASS_CENTER", 28);
+        columnMapping.put("MEAN_DISTANCE_TO_MASS_CENTER", 29);
+        columnMapping.put("MAX_DISTANCE_TO_MASS_CENTER", 30);
+        columnMapping.put("MAX_MEAN_DISTANCE_TO_MASS_CENTER_RATIO", 31);
+        columnMapping.put("SUM_DISTANCE_TO_CENTROID", 32);
+        columnMapping.put("MEAN_DISTANCE_TO_CENTROID", 33);
+        columnMapping.put("MAX_DISTANCE_TO_CENTROID", 34);
+        columnMapping.put("MAX_MEAN_DISTANCE_TO_CENTROID_RATIO", 35);
+        return columnMapping;
     }
 
     /**
@@ -189,6 +237,23 @@ public class Colonies {
         this.voronoiDiagramStack = null;
         this.voronoiDiagrams.setLut(this.glasbeyLUT);
         }
+    }
+    /**
+     * This method computes the statistics for each label in the labels image.
+     * @param labels ImagePlus object containing the labels
+     * @param channelDIC ImagePlus object containing the DIC channel
+     * @return Map<Integer, double[][]> containing the statistics for each label in each frame
+     */
+    public static Map<Integer, double[][]> computeStats(ImagePlus labels, ImagePlus channelDIC) {
+        Map<Integer, double[][]> stats = new HashMap<>();
+        for (int i = 1; i <= labels.getStackSize(); i++) {
+            ImageProcessor frame = channelDIC.getStack().getProcessor(i);
+            ImageProcessor slice = labels.getStack().getProcessor(i);
+            double[][] sliceStats = getLabelStats(new ImagePlus("Slice", slice), new ImagePlus("DIC", frame));
+            stats.put(i, sliceStats);
+            IJ.log("Computed stats for frame " + i + "/" + labels.getStackSize());
+        }
+        return stats;
     }
     /**
      * This method binarizes an image by setting all non-zero pixels to 1.
