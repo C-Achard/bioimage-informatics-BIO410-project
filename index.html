@@ -303,6 +303,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-from-jar-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install from .jar file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -320,6 +344,30 @@
       Troubleshooting
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#out-of-memory-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Out of memory issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-not-found-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class not found issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -435,6 +483,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-from-jar-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install from .jar file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -452,6 +524,30 @@
       Troubleshooting
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#out-of-memory-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Out of memory issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-not-found-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class not found issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -524,11 +620,19 @@ The plugin is designed to analyze the dynamics of DNA replication in bacteria, s
 
 <p>Various plots and statistics can then be generated from the data.</p>
 <h2 id="installation">Installation</h2>
+<h3 id="dependencies">Dependencies</h3>
+<p><strong>First, install the following dependencies manually</strong> :</p>
+<ul>
+<li>cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues. 
+  Follow <a href="https://clij.github.io/clij2-docs/installationInFiji">this link</a> to install clij2 in Fiji.</li>
+</ul>
+<h3 id="install-from-jar-file">Install from .jar file</h3>
 <p>To install the plugin, take the provided .jar file in GitHub Packages and place it in the plugins folder of your ImageJ installation.</p>
 <p>The plugin will then be available in the ImageJ menu under Plugins &gt; Replisome Analysis.</p>
 <h2 id="usage">Usage</h2>
 <p>For information on how to use the plugin, see the <a href="plugin_usage/">Plugin Usage</a> page.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="out-of-memory-issues">Out of memory issues</h3>
 <p>The most common issue with the plugin is running out of memory. 
 If you encounter this issue, you can increase the memory available to ImageJ, or try running the workflows separately.</p>
 <div class="admonition warning">
@@ -539,6 +643,9 @@ Go to Edit&gt;Options&gt;Memory &amp; Threads and adjust the memory settings as 
 See <a href="https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory">this page</a> for more information.</p>
 </div>
 <p>See the <a href="plugin_usage/">Plugin Usage</a> page for more information on running the plugin.</p>
+<h3 id="class-not-found-issues">Class not found issues</h3>
+<p>If you do not install clij2 manually, you may face some ClassNotFound issues.
+To solve this, install clij2 manually and restart ImageJ.</p>
 <h2 id="data-availability">Data availability</h2>
 <h3 id="omero">OMERO</h3>
 <p>The plugin is designed to work with 2D+t images of bacteria.
