@@ -191,6 +191,22 @@ public class Colonies {
         }
     }
     /**
+     * This method computes the statistics for each label in the labels image.
+     * @param labels ImagePlus object containing the labels
+     * @param channelDIC ImagePlus object containing the DIC channel
+     * @return Map<Integer, double[][]> containing the statistics for each label in each frame
+     */
+    public static Map<Integer, double[][]> computeStats(ImagePlus labels, ImagePlus channelDIC) {
+        Map<Integer, double[][]> stats = new HashMap<>();
+        for (int i = 1; i <= labels.getStackSize(); i++) {
+            ImageProcessor frame = channelDIC.getStack().getProcessor(i);
+            ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
+            double[][] sliceStats = getLabelStats(labels, slice);
+            stats.put(i, sliceStats);
+        }
+        return stats;
+    }
+    /**
      * This method binarizes an image by setting all non-zero pixels to 1.
      * @param slice ImagePlus object to binarize
      * @return ImagePlus object with binarized pixels
