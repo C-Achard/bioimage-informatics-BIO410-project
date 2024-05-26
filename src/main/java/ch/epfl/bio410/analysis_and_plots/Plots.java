@@ -179,9 +179,10 @@ public class Plots{
      * Plot the area of each track over time.
      * @param tracksStats Map of track ID to map of frame to statistics
      * @param feature The feature to plot (see the CSV header for available features)
+     * @param limitOptional Optional limit on the number of tracks to plot
      * @return JPanel containing the chart
      */
-    public static JPanel plotColonyFeaturePerTrack(Map<Integer, Map<Integer, double[]>> tracksStats, String feature) {
+    public static JPanel plotColonyFeaturePerTrack(Map<Integer, Map<Integer, double[]>> tracksStats, String feature, Optional<Integer> limitOptional){
         // VALID ENTRIES IN THE STATS //
         //    IDENTIFIER	BOUNDING_BOX_X	BOUNDING_BOX_Y	BOUNDING_BOX_Z	BOUNDING_BOX_END_X	BOUNDING_BOX_END_Y
         //    BOUNDING_BOX_END_Z	BOUNDING_BOX_WIDTH	BOUNDING_BOX_HEIGHT	BOUNDING_BOX_DEPTH	MINIMUM_INTENSITY
@@ -193,21 +194,31 @@ public class Plots{
         //    MEAN_DISTANCE_TO_CENTROID	MAX_DISTANCE_TO_CENTROID	MAX_MEAN_DISTANCE_TO_CENTROID_RATIO
         //////////////////////
         // Create the XYChart
+        int limit = limitOptional.orElse(tracksStats.size());
         XYChart chart = new XYChartBuilder().width(1600).height(800).title("Area of each track over time").xAxisTitle("Frame").yAxisTitle("Area").build();
         // For each track, extract the frame as x and the area as y
+        int limiter = 0;
         for (Map.Entry<Integer, Map<Integer, double[]>> entry : tracksStats.entrySet()) {
+            if (limit != 0 && limiter >= limit) break;
+            limiter++;
             Integer trackId = entry.getKey();
             Map<Integer, double[]> stats = entry.getValue();
             List<Integer> xData = new ArrayList<>();
             List<Double> yData = new ArrayList<>();
-            for (Map.Entry<Integer, double[]> frameStats : stats.entrySet()) {
+            // sort stats by frame (key)
+            SortedMap<Integer, double[]> sortedStats = new TreeMap<>(stats);
+            for (Map.Entry<Integer, double[]> frameStats : sortedStats.entrySet()) {
                 xData.add(frameStats.getKey());
                 yData.add(frameStats.getValue()[Colonies.getColumnMapping().get(feature)]);
             }
             // Add the series to the chart
-            XYSeries series = chart.addSeries("Track " + trackId, xData, yData);
-            series.setMarker(SeriesMarkers.NONE);
-            series.setLineStyle(SeriesLines.SOLID);
+            try {
+                XYSeries series = chart.addSeries("Track " + trackId, xData, yData);
+                series.setMarker(SeriesMarkers.NONE);
+                series.setLineStyle(SeriesLines.SOLID);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Track " + trackId + " has no data for feature " + feature);
+            }
         }
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
@@ -218,7 +229,7 @@ public class Plots{
      * @return JPanel containing the chart
      */
     public static JPanel plotAreaPerTrack(Map<Integer, Map<Integer, double[]>> tracksStats){
-        return plotColonyFeaturePerTrack(tracksStats, "PIXEL_COUNT");
+        return plotColonyFeaturePerTrack(tracksStats, "PIXEL_COUNT", Optional.empty());
     }
 
     /**
