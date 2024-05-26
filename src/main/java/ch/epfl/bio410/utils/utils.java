@@ -169,7 +169,7 @@ public class utils {
 
     /**
      * Reads a CSV file and returns a list of CSV records (columns).
-     * @param csvFilePath File containing CSV data
+     * @param csvFile CSV file to read
      * @return List of CSV records
      * @throws IOException If an error occurs while reading the file
      */
