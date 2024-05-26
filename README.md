@@ -60,8 +60,8 @@ This plugin uses :
 
 ## Authors
 
-- Mathilde Morelli
 - Cyril Achard
+- Mathilde Morelli
 - Linkai Dai
 
 ## Acknowledgements
