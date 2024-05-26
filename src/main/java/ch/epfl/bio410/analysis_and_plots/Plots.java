@@ -119,8 +119,8 @@ public class Plots{
     //             for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
     //                 Integer trackId = entry.getKey();
     //                 List<CSVRecord> rows = entry.getValue();
-    //                 JPanel chartPanel = createChartPanel(trackId, rows);
-    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "plot_track_" + trackId);
+    //                 JPanel chartPanel = plotSpotTrack(trackId, rows);
+    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "spot_" + trackId);
     //             }
     //         }
     //     } catch (IOException e) {
@@ -175,45 +175,22 @@ public class Plots{
     }
 
     /**
-     * Creates a chart panel with XY plots for the specified track.
-     * @param trackId The ID of the track
-     * @param rows List of CSV records for the track
+     * Creates a chart panel with XY plots for the specified spot.
+     * @param trackId The ID of the spot
+     * @param rows List of CSV records for the spots
      * @return JPanel containing the chart
      */
-    public static JPanel createChartPanel(Integer trackId, List<CSVRecord> rows) {
+    public static JPanel plotSpotTrack(Integer trackId, List<CSVRecord> rows) {
         // Dimensions
         int width = 1600;
         int height = 1600;
 
-        // Sort the rows by FRAME
-        rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
-
-        // Extract data for the plots
-        List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_X"))).collect(Collectors.toList());
-        List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_Y"))).collect(Collectors.toList());
-        List<Double> timeData = rows.stream().map(row -> Double.parseDouble(row.get("POSITION_T"))).collect(Collectors.toList());
-        List<Double> intensityData = rows.stream().map(row -> Double.parseDouble(row.get("MEDIAN_INTENSITY_CH1"))).collect(Collectors.toList());
-
-        // Create the first chart (POSITION_X vs POSITION_Y)
-        XYChart chart1 = new XYChartBuilder().width(width).height(height/2).title("Track ID: " + trackId + " (POSITION_X vs POSITION_Y)")
-                .xAxisTitle("POSITION_X").yAxisTitle("POSITION_Y").build();
-        XYSeries series1 = chart1.addSeries("Track " + trackId, xData, yData);
-        chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
-        series1.setMarker(SeriesMarkers.NONE);
-        series1.setLineStyle(SeriesLines.SOLID);
-
-        // Create the second chart (POSITION_T vs MEDIAN_INTENSITY_CH1)
-        XYChart chart2 = new XYChartBuilder().width(width).height(height/2).title("Track ID: " + trackId + " (POSITION_T vs MEDIAN_INTENSITY_CH1)")
-                .xAxisTitle("POSITION_T").yAxisTitle("MEDIAN_INTENSITY_CH1").build();
-        XYSeries series2 = chart2.addSeries("Track " + trackId, timeData, intensityData);
-        chart2.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
-        series2.setMarker(SeriesMarkers.NONE);
-        series2.setLineStyle(SeriesLines.SOLID);
-
         // Combine the charts into a single panel
         JPanel chartPanel = new JPanel(new GridLayout(2, 1));
-        chartPanel.add(new XChartPanel<>(chart1));
-        chartPanel.add(new XChartPanel<>(chart2));
+        // First chart (POSITION_X vs POSITION_Y)
+        chartPanel.add(plotFeatures(trackId, rows, "POSITION_X", "POSITION_Y", width, height/2));
+        // Second chart (POSITION_T vs MEDIAN_INTENSITY_CH1)
+        chartPanel.add(plotFeatures(trackId, rows, "POSITION_T", Arrays.asList("MEAN_INTENSITY_CH1", "MEDIAN_INTENSITY_CH1", "MIN_INTENSITY_CH1", "MAX_INTENSITY_CH1"), width, height/2));
 
         return chartPanel;
     }
@@ -224,25 +201,61 @@ public class Plots{
      * @param rows List of CSV records containing the data (sorted by frame)
      * @param xFeature The feature to plot on the x-axis
      * @param yFeature The feature to plot on the y-axis
+     * @param width Plot width
+     * @param height Plot height
      * @return JPanel containing the chart
      */
-    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature) {
-        // Dimensions
-        int width = 1600;
-        int height = 1000;
-    
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature){
+        // Default width: 1600
+        return plotFeatures(trackId, rows, xFeature, yFeature, 1600);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature, int width){
+        // Default height: 1000
+        return plotFeatures(trackId, rows, xFeature, yFeature, width, 1000);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature, int width, int height) {
+        return plotFeatures(trackId, rows, xFeature, Arrays.asList(yFeature), width, height);
+    }
+
+    /**
+     * Plot a collection of features against a single x-feature for a single track.
+     * @param trackId The ID of the track to plot
+     * @param rows List of CSV records containing the data (sorted by frame)
+     * @param xFeature The feature to plot on the x-axis
+     * @param yFeatures The collection of features to plot on the y-axis
+     * @param width Plot width
+     * @param height Plot height
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures){
+        // Default width: 1600
+        return plotFeatures(trackId, rows, xFeature, yFeatures, 1600);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures, int width){
+        // Default height: 1000
+        return plotFeatures(trackId, rows, xFeature, yFeatures, width, 1000);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures, int width, int height) {
+        // Sort by frame
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
+        // Prepare x-axis
         List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get(xFeature))).collect(Collectors.toList());
-        List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
-
-        // Create the chart with the specified features
         XYChart chart = new XYChartBuilder().width(width).height(height).title(
-                "Track ID: " + trackId + " (" + xFeature + " vs " + yFeature + ")"
-                ).xAxisTitle(xFeature).yAxisTitle(yFeature).build();
-        XYSeries series = chart.addSeries("Track " + trackId, xData, yData);
-        series.setMarker(SeriesMarkers.NONE);
-        series.setLineStyle(SeriesLines.SOLID);
+                "Track ID: " + trackId + " (" + xFeature + " as independent variable)"
+                ).xAxisTitle(xFeature).yAxisTitle("others").build();
+
+        // Add features one by one
+        for (String yFeature : yFeatures) {
+            // Get y-feature
+            List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
+
+            // Add series to plot
+            XYSeries series = chart.addSeries(yFeature, xData, yData);
+            chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
+            series.setMarker(SeriesMarkers.NONE);
+            series.setLineStyle(SeriesLines.SOLID);
+        }
 
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
