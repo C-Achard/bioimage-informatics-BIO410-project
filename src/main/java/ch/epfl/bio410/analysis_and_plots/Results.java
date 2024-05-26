@@ -169,8 +169,7 @@ public class Results {
                 int start_frame = (int) Double.parseDouble(track.get("TRACK_START"));
                 int end_frame = (int) Double.parseDouble(track.get("TRACK_STOP"));
                 System.out.println("Track " + track_ID + " from frame " + start_frame + " to " + end_frame);
-                for (int i = start_frame; i <= end_frame; i++) {
-                    System.out.println("Frame " + i + " out of " + end_frame);
+                for (int i = start_frame+1; i <= end_frame+1; i++) {
                     // Get the label statistics for the colony in the current frame
                     double[][] stats_colonies = stats.get(i);
                     // Filter stats to get only stats of colony to which the track belongs

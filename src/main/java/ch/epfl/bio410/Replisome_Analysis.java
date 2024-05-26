@@ -387,7 +387,7 @@ public class Replisome_Analysis implements Command {
 					// Loop over tracks, and assign colony stats to each of them
 					// This is a mapping of mapping of double[][]
 					// First ID is the track ID, second ID is the colony ID, and the double[][] is the stats
-					Map<Integer, Map<Integer, double[][]>> trackStats = new HashMap<>();
+					Map<Integer, Map<Integer, double[]>> trackStats = new HashMap<>();
 					// Group by track ID
 					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
 					for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
@@ -396,7 +396,7 @@ public class Replisome_Analysis implements Command {
 						String trackIdString = Integer.toString(trackId);
 						List<CSVRecord> rows = entry.getValue();
 						// Get the colony label for the track
-						Map<Integer, double[][]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
+						Map<Integer, double[]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
 						trackStats.put(trackId, statsforTrack);
 					}
 					IJ.log("Finished processing stats");
