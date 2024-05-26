@@ -306,8 +306,69 @@ public class Plots{
         return new XChartPanel<>(chart);
     }
     public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures){
-        // Default width: 1600
         return plotFeatures(trackId, rows, xFeature, yFeatures, 1600, 800);
+    }
+
+    /**
+     * Plot "instantaneous" speed over time for a given collection of tracks.
+     * @param trackIds List of IDs of the tracks to plot
+     * @param rows List of CSV records containing the data (sorted by frame)
+     * @param width Plot width
+     * @param height Plot height
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotSpeed(List<Integer> trackIds, List<CSVRecord> rows, int width, int height) {
+        // Time between each frame
+        double dt = 1;
+
+        // Sort by frame
+        rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
+        // Separate rows per track
+        Map<Integer, List<CSVRecord>> groupedRows = groupByTrackId(rows);
+
+        // Prepare chart for adding series in
+        XYChart chart = new XYChartBuilder().width(width).height(height).title(
+                "POSITION_T vs SPOT_SPEED for selected tracks"
+            ).xAxisTitle("POSITION_T").yAxisTitle("SPOT_SPEED").build();
+
+        for (Integer trackId : trackIds) {
+            List<CSVRecord> trackData = groupedRows.get(trackId);
+
+            // Get data
+            List<Double> xData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_X"))).collect(Collectors.toList());
+            List<Double> yData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_Y"))).collect(Collectors.toList());
+            List<Double> zData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_Z"))).collect(Collectors.toList());
+            List<Double> tData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_T"))).collect(Collectors.toList());
+
+            List<Double> trackSpeed = new ArrayList<>();
+            for (int i = 1; i < xData.size(); i++) {
+                Double rSquared = Math.pow(xData.get(i) - xData.get(i-1), 2.0) +
+                                  Math.pow(yData.get(i) - yData.get(i-1), 2.0) +
+                                  Math.pow(zData.get(i) - zData.get(i-1), 2.0);
+                trackSpeed.add(Math.pow(rSquared, 0.5)/dt);
+            }
+            tData.remove(0);  // to get array of the same size
+
+            // Add series to the chart
+            try {
+                XYSeries series = chart.addSeries("Track " + trackId, tData, trackSpeed);
+                series.setMarker(SeriesMarkers.NONE);
+                series.setLineStyle(SeriesLines.SOLID);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Unable to calculate speed for track " + trackId);
+            }
+        }
+
+        return new XChartPanel<>(chart);
+    }
+    public static JPanel plotSpeed(List<Integer> trackIds, List<CSVRecord> rows) {
+        return plotSpeed(trackIds, rows, 1600, 800);
+    }
+    public static JPanel plotSpeed(Integer trackId, List<CSVRecord> rows, int width, int height) {
+        return plotSpeed(Arrays.asList(trackId), rows, width, height);
+    }
+    public static JPanel plotSpeed(Integer trackId, List<CSVRecord> rows) {
+        return plotSpeed(trackId, rows, 1600, 800);
     }
 
     /**
