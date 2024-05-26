@@ -9,9 +9,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import net.imglib2.ops.parse.token.Int;
 import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -31,7 +29,6 @@ import ch.epfl.bio410.utils.TrackingConfig;
 import ch.epfl.bio410.segmentation.segmentation;
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.Tracking;
-import ch.epfl.bio410.analysis_and_plots.Analysis;
 import ch.epfl.bio410.analysis_and_plots.Plots;
 import ch.epfl.bio410.analysis_and_plots.Results;
 import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
@@ -63,6 +60,7 @@ public class Replisome_Analysis implements Command {
 		// Misc utils
 		private ImagePlus colonyLabels;
 		public Map<Integer, double[][]> colonyStats;
+		public Map<Integer, Map<Integer, double[]>> trackStats;
 	/**
 	 * This method is called when the command is run.
 	 */
@@ -386,8 +384,8 @@ public class Replisome_Analysis implements Command {
 					this.colonyLabels.hide();
 					// Loop over tracks, and assign colony stats to each of them
 					// This is a mapping of mapping of double[][]
-					// First ID is the track ID, second ID is the colony ID, and the double[][] is the stats
-					Map<Integer, Map<Integer, double[]>> trackStats = new HashMap<>();
+					// First ID is the track ID, second ID is the frame, and the double[] is the stats
+					this.trackStats = new HashMap<>();
 					// Group by track ID
 					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
 					for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
@@ -397,7 +395,7 @@ public class Replisome_Analysis implements Command {
 						List<CSVRecord> rows = entry.getValue();
 						// Get the colony label for the track
 						Map<Integer, double[]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
-						trackStats.put(trackId, statsforTrack);
+						this.trackStats.put(trackId, statsforTrack);
 					}
 					IJ.log("Finished processing stats");
 					// Show the colonyLabels again
@@ -407,10 +405,18 @@ public class Replisome_Analysis implements Command {
 				}
 
 				// Analysis : plot area per track //
+				JPanel areaPerTrackPlot = Plots.plotAreaPerTrack(this.trackStats);
+				try {
+					String areaTracksPlotPath = Paths.get(path, "results", "area_per_track_" + imageNameWithoutExtension).toString();
+					Plots.saveChartPanelAsPNG(areaPerTrackPlot, areaTracksPlotPath);
+					Plots.showSavedPlot(areaTracksPlotPath);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 
 				// Additional analysis //
 				// Goal 1 : show position of tracks : mean displacement, directionality
-				// Goal 2 : show mobility :  Speed, duration
+				// Goal 2 : show mobility : Speed, duration
 				// Goal 3 : compare mobility across images (and also colonies ?)
 
 				IJ.log("All done!");

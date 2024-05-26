@@ -85,6 +85,46 @@ public class Colonies {
         columnMapping.put("MAX_DISTANCE_TO_CENTROID", 34);
         columnMapping.put("MAX_MEAN_DISTANCE_TO_CENTROID_RATIO", 35);
     }
+    public static Map<String, Integer> getColumnMapping() {
+        Map<String, Integer> columnMapping = new HashMap<>();
+        columnMapping.put("IDENTIFIER", 0);
+        columnMapping.put("BOUNDING_BOX_X", 1);
+        columnMapping.put("BOUNDING_BOX_Y", 2);
+        columnMapping.put("BOUNDING_BOX_Z", 3);
+        columnMapping.put("BOUNDING_BOX_END_X", 4);
+        columnMapping.put("BOUNDING_BOX_END_Y", 5);
+        columnMapping.put("BOUNDING_BOX_END_Z", 6);
+        columnMapping.put("BOUNDING_BOX_WIDTH", 7);
+        columnMapping.put("BOUNDING_BOX_HEIGHT", 8);
+        columnMapping.put("BOUNDING_BOX_DEPTH", 9);
+        columnMapping.put("MINIMUM_INTENSITY", 10);
+        columnMapping.put("MAXIMUM_INTENSITY", 11);
+        columnMapping.put("MEAN_INTENSITY", 12);
+        columnMapping.put("SUM_INTENSITY", 13);
+        columnMapping.put("STANDARD_DEVIATION_INTENSITY", 14);
+        columnMapping.put("PIXEL_COUNT", 15);
+        columnMapping.put("SUM_INTENSITY_TIMES_X", 16);
+        columnMapping.put("SUM_INTENSITY_TIMES_Y", 17);
+        columnMapping.put("SUM_INTENSITY_TIMES_Z", 18);
+        columnMapping.put("MASS_CENTER_X", 19);
+        columnMapping.put("MASS_CENTER_Y", 20);
+        columnMapping.put("MASS_CENTER_Z", 21);
+        columnMapping.put("SUM_X", 22);
+        columnMapping.put("SUM_Y", 23);
+        columnMapping.put("SUM_Z", 24);
+        columnMapping.put("CENTROID_X", 25);
+        columnMapping.put("CENTROID_Y", 26);
+        columnMapping.put("CENTROID_Z", 27);
+        columnMapping.put("SUM_DISTANCE_TO_MASS_CENTER", 28);
+        columnMapping.put("MEAN_DISTANCE_TO_MASS_CENTER", 29);
+        columnMapping.put("MAX_DISTANCE_TO_MASS_CENTER", 30);
+        columnMapping.put("MAX_MEAN_DISTANCE_TO_MASS_CENTER_RATIO", 31);
+        columnMapping.put("SUM_DISTANCE_TO_CENTROID", 32);
+        columnMapping.put("MEAN_DISTANCE_TO_CENTROID", 33);
+        columnMapping.put("MAX_DISTANCE_TO_CENTROID", 34);
+        columnMapping.put("MAX_MEAN_DISTANCE_TO_CENTROID_RATIO", 35);
+        return columnMapping;
+    }
 
     /**
      * This method finds colony in a thresholded DIC channel.

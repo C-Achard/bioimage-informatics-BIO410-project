@@ -4,6 +4,7 @@ package ch.epfl.bio410.analysis_and_plots;
 // import picocli.CommandLine.Command;
 // import picocli.CommandLine.Option;
 // import picocli.CommandLine.Parameters;
+import ch.epfl.bio410.segmentation.Colonies;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
@@ -174,6 +175,52 @@ public class Plots{
         return dataRows.stream().collect(Collectors.groupingBy(row -> Integer.parseInt(row.get("TRACK_ID"))));
     }
 
+        /**
+     * Plot the area of each track over time.
+     * @param tracksStats Map of track ID to map of frame to statistics
+     * @param feature The feature to plot (see the CSV header for available features)
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotColonyFeaturePerTrack(Map<Integer, Map<Integer, double[]>> tracksStats, String feature) {
+        // VALID ENTRIES IN THE STATS //
+        //    IDENTIFIER	BOUNDING_BOX_X	BOUNDING_BOX_Y	BOUNDING_BOX_Z	BOUNDING_BOX_END_X	BOUNDING_BOX_END_Y
+        //    BOUNDING_BOX_END_Z	BOUNDING_BOX_WIDTH	BOUNDING_BOX_HEIGHT	BOUNDING_BOX_DEPTH	MINIMUM_INTENSITY
+        //    MAXIMUM_INTENSITY	MEAN_INTENSITY	SUM_INTENSITY	STANDARD_DEVIATION_INTENSITY
+        //    PIXEL_COUNT	SUM_INTENSITY_TIMES_X	SUM_INTENSITY_TIMES_Y	SUM_INTENSITY_TIMES_Z	MASS_CENTER_X
+        //    MASS_CENTER_Y	MASS_CENTER_Z	SUM_X	SUM_Y	SUM_Z	CENTROID_X	CENTROID_Y	CENTROID_Z
+        //    SUM_DISTANCE_TO_MASS_CENTER	MEAN_DISTANCE_TO_MASS_CENTER
+        //    MAX_DISTANCE_TO_MASS_CENTER	MAX_MEAN_DISTANCE_TO_MASS_CENTER_RATIO	SUM_DISTANCE_TO_CENTROID
+        //    MEAN_DISTANCE_TO_CENTROID	MAX_DISTANCE_TO_CENTROID	MAX_MEAN_DISTANCE_TO_CENTROID_RATIO
+        //////////////////////
+        // Create the XYChart
+        XYChart chart = new XYChartBuilder().width(1600).height(800).title("Area of each track over time").xAxisTitle("Frame").yAxisTitle("Area").build();
+        // For each track, extract the frame as x and the area as y
+        for (Map.Entry<Integer, Map<Integer, double[]>> entry : tracksStats.entrySet()) {
+            Integer trackId = entry.getKey();
+            Map<Integer, double[]> stats = entry.getValue();
+            List<Integer> xData = new ArrayList<>();
+            List<Double> yData = new ArrayList<>();
+            for (Map.Entry<Integer, double[]> frameStats : stats.entrySet()) {
+                xData.add(frameStats.getKey());
+                yData.add(frameStats.getValue()[Colonies.getColumnMapping().get(feature)]);
+            }
+            // Add the series to the chart
+            XYSeries series = chart.addSeries("Track " + trackId, xData, yData);
+            series.setMarker(SeriesMarkers.NONE);
+            series.setLineStyle(SeriesLines.SOLID);
+        }
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
+    }
+    /**
+     * Plot the area of each track over time.
+     * @param tracksStats Map of track ID to map of frame to statistics
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotAreaPerTrack(Map<Integer, Map<Integer, double[]>> tracksStats){
+        return plotColonyFeaturePerTrack(tracksStats, "PIXEL_COUNT");
+    }
+
     /**
      * Creates a chart panel with XY plots for the specified spot.
      * @param trackId The ID of the spot
@@ -205,16 +252,11 @@ public class Plots{
      * @param height Plot height
      * @return JPanel containing the chart
      */
-    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature){
-        // Default width: 1600
-        return plotFeatures(trackId, rows, xFeature, yFeature, 1600);
-    }
-    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature, int width){
-        // Default height: 1000
-        return plotFeatures(trackId, rows, xFeature, yFeature, width, 1000);
-    }
     public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature, int width, int height) {
         return plotFeatures(trackId, rows, xFeature, Arrays.asList(yFeature), width, height);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature){
+        return plotFeatures(trackId, rows, xFeature, yFeature, 1600, 800);
     }
 
     /**
@@ -227,14 +269,6 @@ public class Plots{
      * @param height Plot height
      * @return JPanel containing the chart
      */
-    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures){
-        // Default width: 1600
-        return plotFeatures(trackId, rows, xFeature, yFeatures, 1600);
-    }
-    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures, int width){
-        // Default height: 1000
-        return plotFeatures(trackId, rows, xFeature, yFeatures, width, 1000);
-    }
     public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures, int width, int height) {
         // Sort by frame
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
@@ -259,6 +293,10 @@ public class Plots{
 
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
+    }
+    public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures){
+        // Default width: 1600
+        return plotFeatures(trackId, rows, xFeature, yFeatures, 1600, 800);
     }
 
     /**
@@ -331,10 +369,13 @@ public class Plots{
      * @param filePath Path to the image file
      * @return ImagePlus object for further manipulation with ImageJ
      */
-    public static ImagePlus showSavedPlot(String filePath) {
-        ImagePlus imp = openImage(filePath);
+    public static ImagePlus showSavedPlot(String filePath, String fileExtension) {
+        ImagePlus imp = openImage(filePath + "." + fileExtension);
         imp.show();
         return imp;
+    }
+    public static ImagePlus showSavedPlot(String filePath) {
+        return showSavedPlot(filePath, "png");
     }
 
     /**
