@@ -147,12 +147,17 @@ Once colony detection is finished, colony labels will be shown in ImageJ.
 They will also be saved as {ImageName}_colony_labels.tif in the results folder.
 If you have selected to display the colony regions, the Voronoi diagram will also be shown and saved as {ImageName}_voronoi_diagram.tif.
 
+!!! note
+    The colony labels are saved as instance labels, where each colony is assigned a unique label (number) and the background is 0.
+
 #### Tracking
 
 Once the tracking has run, tracks will be shown on the image in ImageJ.
 
 They will also be saved as csv files in the results folder, one for spots and one for tracks.
 The files would be called spots_{ImageName}.csv and tracks_{ImageName}.csv. 
+
+The CSV rows contain the tracks, and the columns several features of the tracks.
 
 #### Analysis
 
@@ -162,3 +167,5 @@ This means you can either run all components at once, or run them separately and
 The shown plots include :
 
 - **TODO** : add plots
+
+These will be saved in the results folder as png files, and shown in ImageJ.
