@@ -429,6 +429,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -604,6 +613,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -635,17 +653,20 @@
 <h2 id="launching-the-plugin">Launching the plugin</h2>
 <p>To launch the plugin, open ImageJ and navigate to the <code>Plugins</code> menu. 
 The plugin will be listed under <code>BII &gt; Replisome Analysis</code>.</p>
+<p><img alt="Plugin menu in ImageJ" src="../resources/images/interface/plugin_menu_screen.png" /></p>
 <h2 id="choosing-an-image">Choosing an image</h2>
 <p>Specify the path to the folder containing the images you wish to analyze, then select the image you wish to analyze.</p>
+<p><img alt="Choosing an image" src="../resources/images/interface/image_path.png" /></p>
 <h2 id="choosing-what-to-run">Choosing what to run</h2>
 <p>The plugin provides two distinct but related components, Colony Detection and Replisome Tracking.</p>
 <ul>
 <li>Colony detection : each bacteria in the DIC channel is assigned to a colony. Labels are also filtered to remove small outliers.</li>
 <li>Replisome tracking : the replisomes in the GFP channel are tracked over time, using TrackMate.</li>
-<li>Analysis : TODO</li>
+<li>Analysis : Tracks and colonies features will be used to generate statistics and plots.</li>
 </ul>
 <p>The results from these components can then be used to run the Analysis section.
 You can run both or only one of these workflows by checking the boxes in the <code>Run</code> section.</p>
+<p><img alt="Choosing what to run" src="../resources/images/interface/run_section.png" /></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Running the Analysis section requires that both tracking and colony detection have been run previously.
@@ -656,6 +677,7 @@ The results folder is checked for the presence of the necessary files, and the a
 <p>For default images, some configurations are already available, these will be used if you check the relevant box.</p>
 <p>You may then select one of these configurations from the dropdown menu.
 If no valid configuration is available, the plugin will use the values specified in the interface, and "None" will be displayed in the menu.</p>
+<p><img alt="Choosing a configuration" src="../resources/images/interface/config_menu.png" /></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p><strong>KNOWN ISSUE</strong> The configuration files are stored in the resources of the jar file.</p>
@@ -673,6 +695,7 @@ you may find the parameters for the project images
 <hr />
 <h3 id="specifying-a-new-configuration">Specifying a new configuration</h3>
 <p>If you wish to specify your own configuration, or no configuration is available, simply uncheck the box and fill in the fields as required.</p>
+<p><img alt="Specifying a new configuration" src="../resources/images/interface/plugin_params.png" /></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If no valid configuration is available, the plugin will always use the values specified in the interface.</p>
@@ -704,6 +727,7 @@ the analysis is GPU-accelerated using <a href="https://clij.github.io/">clij2</a
 <p>For complete in-depth information on the parameters, see the <a href="https://imagej.net/media/plugins/trackmate/trackmate-manual.pdf">TrackMate manual</a>.</p>
 <h4 id="display-options">Display options</h4>
 <p>You can choose to display additional results</p>
+<p><img alt="Display options" src="../resources/images/interface/display_options.png" /></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Showing additional results will increase the memory footprint of the plugin.
@@ -718,6 +742,10 @@ You may wish to run components separately if you are running out of memory.</p>
 <p>Once you have selected the images and configurations you wish to use, click <code>OK</code> to run the plugin.
 To close the plugin without running it, click <code>Cancel</code>.</p>
 <h3 id="expected-output">Expected output</h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The results will be overwritten if you run the plugin multiple times with the same image.</p>
+</div>
 <p>The results will be structured as follows, assuming the <code>DATA/</code> folder is provided as input :
 <div class="highlight"><pre><span></span><code>DATA
 ├── Merged-1.tif
@@ -737,10 +765,23 @@ To close the plugin without running it, click <code>Cancel</code>.</p>
 <p>Once colony detection is finished, colony labels will be shown in ImageJ.</p>
 <p>They will also be saved as {ImageName}_colony_labels.tif in the results folder.
 If you have selected to display the colony regions, the Voronoi diagram will also be shown and saved as {ImageName}_voronoi_diagram.tif.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The colony labels are saved as instance labels, where each colony is assigned a unique label (number) and the background is 0.</p>
+</div>
 <h4 id="tracking">Tracking</h4>
 <p>Once the tracking has run, tracks will be shown on the image in ImageJ.</p>
 <p>They will also be saved as csv files in the results folder, one for spots and one for tracks.
 The files would be called spots_{ImageName}.csv and tracks_{ImageName}.csv. </p>
+<p>The CSV rows contain the tracks, and the columns several features of the tracks.</p>
+<h4 id="analysis">Analysis</h4>
+<p>The analysis can be run as long as any of the previous components have been run at least once for the chosen image.
+This means you can either run all components at once, or run them separately and then run the analysis.</p>
+<p>The shown plots include :</p>
+<ul>
+<li><strong>Colony area over time per track</strong> : the area of the colony over time, for each track.</li>
+</ul>
+<p>These will be saved in the results folder as png files, and shown in ImageJ.</p>
 
 
 
