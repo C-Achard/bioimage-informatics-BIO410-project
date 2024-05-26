@@ -231,7 +231,7 @@ public class Replisome_Analysis implements Command {
 				this.config = TrackingConfig.createFromPropertiesFile(configName);
 			}
 		}
-		
+
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
 		// Results
