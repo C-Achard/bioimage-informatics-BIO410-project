@@ -26,7 +26,7 @@ import ij.gui.GenericDialog;
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.utils.TrackingConfig;
-import ch.epfl.bio410.segmentation.segmentation;
+import ch.epfl.bio410.segmentation.Segmentation;
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.Tracking;
 import ch.epfl.bio410.analysis_and_plots.Plots;
@@ -268,7 +268,7 @@ public class Replisome_Analysis implements Command {
 
 			// Segmentation
 			IJ.log("Segmentation of DIC channel");
-			segmentation.segment(denoised);
+			Segmentation.segment(denoised);
 			denoised.show();
 
 			// Assign colonies

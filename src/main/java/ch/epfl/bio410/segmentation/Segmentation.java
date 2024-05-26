@@ -7,7 +7,7 @@ import ij.ImagePlus;
  * This class implements Segmentation.
  */
 
-public class segmentation {
+public class Segmentation {
 
     public static void segment(ImagePlus imp) {
         // Otsu, Default and IsoData work well

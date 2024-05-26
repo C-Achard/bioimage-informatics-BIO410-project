@@ -153,6 +153,13 @@ public class Tracking {
         IJ.log("------------------ TRACKMATE FINISHED ------------------\n");
         return model;
     }
+    /**
+     * Save the features of the tracks to CSV files.
+     * @param model TrackMate model object
+     * @param csvFileSpots File to save the spots features
+     * @param csvFileTracks File to save the tracks features
+     * @throws IOException
+     */
     public void saveFeaturesToCSV(Model model, File csvFileSpots, File csvFileTracks) throws IOException {
         // Create a selection model for the TrackMate model
         SelectionModel sm = new SelectionModel(model);

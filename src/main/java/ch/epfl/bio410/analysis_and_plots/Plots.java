@@ -305,6 +305,14 @@ public class Plots{
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
     }
+    /**
+     * Plot a collection of features against a single x-feature for a single track, with a default width and height.
+     * @param trackId The ID of the track to plot
+     * @param rows List of CSV records containing the data (sorted by frame)
+     * @param xFeature The feature to plot on the x-axis
+     * @param yFeatures The collection of features to plot on the y-axis
+     * @return JPanel containing the chart
+     */
     public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, List<String> yFeatures){
         // Default width: 1600
         return plotFeatures(trackId, rows, xFeature, yFeatures, 1600, 800);
