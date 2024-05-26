@@ -125,6 +125,9 @@ To close the plugin without running it, click `Cancel`.
 
 ### Expected output
 
+!!! warning
+    The results will be overwritten if you run the plugin multiple times with the same image.
+
 The results will be structured as follows, assuming the `DATA/` folder is provided as input :
 ```
 DATA
@@ -166,6 +169,6 @@ This means you can either run all components at once, or run them separately and
 
 The shown plots include :
 
-- **TODO** : add plots
+- **Colony area over time per track** : the area of the colony over time, for each track.
 
 These will be saved in the results folder as png files, and shown in ImageJ.
