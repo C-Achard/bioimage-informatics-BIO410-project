@@ -353,12 +353,13 @@ public class Replisome_Analysis implements Command {
 				// Or open a new one
 				else{
 					this.colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
-					this.colonyLabels.show();
 					IJ.run("Tile");
+					this.colonyLabels.hide();
 					utils.add_pixel_size(this.colonyLabels, imageDIC);
 					IJ.log("Assigning tracks to colony labels");
 					// Assign tracks to colonies and save the results
 					assignTracksToColonies(tracks, this.colonyLabels, imageNameWithoutExtension, path); //not sure if this works
+					this.colonyLabels.show();
 				}
 
 				// Analysis : plot area per track //
@@ -368,8 +369,12 @@ public class Replisome_Analysis implements Command {
 
 				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
+					IJ.log("Fetching stats for tracks and colonies");
 					if (this.colonyStats == null) {
+						IJ.log("Computing stats for colonies");
+						this.colonyLabels.hide();
 						this.colonyStats = Colonies.computeStats(this.colonyLabels, imageDIC);
+						this.colonyLabels.show();
 					}
 					List<CSVRecord> tracks_with_labels = null;
 					Results results = new Results();
@@ -378,6 +383,9 @@ public class Replisome_Analysis implements Command {
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
+					// Hide colonyLabels while processing
+					IJ.log("Starting stats processing...");
+					this.colonyLabels.hide();
 					// Loop over tracks, and assign colony stats to each of them
 					// This is a mapping of mapping of double[][]
 					// First ID is the track ID, second ID is the colony ID, and the double[][] is the stats
@@ -393,6 +401,9 @@ public class Replisome_Analysis implements Command {
 						Map<Integer, double[][]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
 						trackStats.put(trackId, statsforTrack);
 					}
+					IJ.log("Finished processing stats");
+					// Show the colonyLabels again
+					this.colonyLabels.show();
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}

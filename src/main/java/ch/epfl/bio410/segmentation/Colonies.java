@@ -203,6 +203,7 @@ public class Colonies {
             ImagePlus slice = new ImagePlus("Slice", frame.duplicate());
             double[][] sliceStats = getLabelStats(labels, slice);
             stats.put(i, sliceStats);
+            IJ.log("Computed stats for frame " + i + "/" + labels.getStackSize());
         }
         return stats;
     }
