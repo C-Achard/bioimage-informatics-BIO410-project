@@ -319,7 +319,7 @@ public class Replisome_Analysis implements Command {
 			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
 			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
 			try {
-				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath, imagePath);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

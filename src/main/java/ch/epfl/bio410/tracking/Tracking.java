@@ -160,7 +160,7 @@ public class Tracking {
      * @param csvFileTracks File to save the tracks features
      * @throws IOException
      */
-    public void saveFeaturesToCSV(Model model, File csvFileSpots, File csvFileTracks) throws IOException {
+    public void saveFeaturesToCSV(Model model, File csvFileSpots, File csvFileTracks, String imagePath) throws IOException {
         // Create a selection model for the TrackMate model
         SelectionModel sm = new SelectionModel(model);
         DisplaySettings ds = this.displaySettings;
@@ -170,7 +170,7 @@ public class Tracking {
         }
 
         // Create tables for tracks
-        TrackTableView trackTableView = new TrackTableView(model, sm, ds);
+        TrackTableView trackTableView = new TrackTableView(model, sm, ds, imagePath);
 
         // Export the tables to CSV files
         trackTableView.getSpotTable().exportToCsv(csvFileSpots);

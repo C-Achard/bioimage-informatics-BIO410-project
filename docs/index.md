@@ -55,6 +55,8 @@ For information on how to use the plugin, see the [Plugin Usage](plugin_usage.md
 
 ## Troubleshooting
 
+### Out of memory issues
+
 The most common issue with the plugin is running out of memory. 
 If you encounter this issue, you can increase the memory available to ImageJ, or try running the workflows separately.
 
@@ -65,6 +67,11 @@ If you encounter this issue, you can increase the memory available to ImageJ, or
     See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory) for more information.
 
 See the [Plugin Usage](plugin_usage.md) page for more information on running the plugin.
+
+### Class not found issues
+
+If you do not install clij2 manually, you may face some ClassNotFound issues.
+To solve this, install clij2 manually and restart ImageJ.
 
 ## Data availability
 
