@@ -162,8 +162,8 @@ public class Results {
      * @param tracksWLabels List of tracks from the tracking CSV file
      * @param stats Map of label ID, containing a double[][] of statistics for each frame
      */
-    public Map<Integer, double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracksWLabels, Map<Integer, double[][]> stats) {
-        Map<Integer, double[][]> colonyFeatures = new HashMap<>();
+    public Map<Integer, double[]> getColonyFeatures(String track_ID, List<CSVRecord> tracksWLabels, Map<Integer, double[][]> stats) {
+        Map<Integer, double[]> colonyFeatures = new HashMap<>();
         for (CSVRecord track : tracksWLabels) {
             if (track.get("TRACK_ID").equals(track_ID)) {
                 int start_frame = (int) Double.parseDouble(track.get("TRACK_START"));
@@ -172,8 +172,10 @@ public class Results {
                 for (int i = start_frame; i <= end_frame; i++) {
                     System.out.println("Frame " + i + " out of " + end_frame);
                     // Get the label statistics for the colony in the current frame
-                    int colonyLabel = (int) Double.parseDouble(track.get("COLONY_LABEL"));
-                    double[][] stats_colony = stats.get(colonyLabel);
+                    double[][] stats_colonies = stats.get(i);
+                    // Filter stats to get only stats of colony to which the track belongs
+                    int colony_label = (int) Double.parseDouble(track.get("COLONY_LABEL"));
+                    double[] stats_colony = stats_colonies[colony_label];
                     colonyFeatures.put(i, stats_colony);
                 }
             }
