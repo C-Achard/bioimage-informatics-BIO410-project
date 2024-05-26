@@ -414,6 +414,21 @@ public class Replisome_Analysis implements Command {
 					throw new RuntimeException(e);
 				}
 
+				// Analysis : histograms and heatmaps for track features //
+				List<String> features = Arrays.asList(
+					"NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
+				);
+
+				// For each feature, plot heatmap against all other features and histogram
+				try {
+					String jointPlotPath = Paths.get(path, "results", "joint_plot_" + imageNameWithoutExtension).toString();
+					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
+					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
+					Plots.showSavedPlot(jointPlotPath);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 				// Additional analysis //
 				// Goal 1 : show position of tracks : mean displacement, directionality
 				// Goal 2 : show mobility : Speed, duration

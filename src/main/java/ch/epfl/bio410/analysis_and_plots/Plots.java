@@ -1,9 +1,5 @@
 package ch.epfl.bio410.analysis_and_plots;
 
-// import picocli.CommandLine;
-// import picocli.CommandLine.Command;
-// import picocli.CommandLine.Option;
-// import picocli.CommandLine.Parameters;
 import ch.epfl.bio410.segmentation.Colonies;
 import ij.ImagePlus;
 import ij.gui.NewImage;
@@ -24,110 +20,16 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-// import ch.epfl.bio410.utils.utils;
-
 import static ij.IJ.openImage;
 
 /**
  * Class for generation of plots, from CSV files or existing dataframes.
- * Already implemented: feature-feature line plots, feature histograms and feature-feature heatmaps.
  */
-// @Command(name = "Plots", mixinStandardHelpOptions = true, version = "Plots 1.0",
-//         description = "Processes a CSV file and generates plots.")
-// public class Plots implements Runnable {
 public class Plots{
-
-    // @Parameters(index = "0", description = "Path to the CSV file")
-    // private String csvFilePath;
-
-    // @Option(names = {"-o", "--output"}, description = "Output directory for the plots")
-    // private String outputDirectory;
-
-    // @Option(names = {"-x"}, description = "Column name 1 for the histogram")
-    // private String hist1;
-
-    // @Option(names = {"-y"}, description = "Column name 2 for the histogram")
-    // private String hist2;
-
     /**
-     * Command-line implementation for easier debugging.
-     * @param args Command-line arguments: CSV file, output dir (optional), features to plot (optional)
+     * Empty. Not meant to be run on its own.
      */
-    public static void main(String[] args) {
-        // int exitCode = new CommandLine(new Plots()).execute(args);
-        // System.exit(exitCode);
-    }
-
-    /**
-     * Arguments passed to main() are then used in run() to run and test the code.
-     */
-    // @Override
-    // public void run() {
-    //     // If output not specified, set output directory based on input file
-    //     if (outputDirectory == null) {
-    //         File csvFile = new File(csvFilePath);
-    //         String baseName = csvFile.getName().substring(0, csvFile.getName().lastIndexOf('.'));
-    //         outputDirectory = csvFile.getParent() + File.separator + baseName;
-    //     }
-
-    //     // Debugging: have the arguments been handled correctly?
-    //     System.out.println("CSV File Path: " + csvFilePath);
-    //     System.out.println("Output Directory: " + outputDirectory);
-    //     System.out.println("Histogram Column 1: " + (hist1 != null ? hist1 : "Not Provided"));
-    //     System.out.println("Histogram Column 2: " + (hist2 != null ? hist2 : "Not Provided"));
-
-    //     // Create the output directory if it doesn't exist
-    //     File outputDir = new File(outputDirectory);
-    //     if (!outputDir.exists()) {
-    //         outputDir.mkdirs();
-    //     }
-
-    //     // String[] cols = {
-    //     //     "NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
-    //     // };
-
-    //     try {
-    //         // Get the data from the CSV file
-    //         List<CSVRecord> dataRows = utils.readCsv(csvFilePath, 3);
-
-    //         // If histogram, then plot histogram instead of line plot
-    //         if (hist1 != null) {
-    //             // for (int i = 0; i < cols.length; i++) {
-    //             //     JPanel chartPanel = plotHistogram(dataRows, cols[i], outputDirectory + File.separator + "hist_" + cols[i]);
-    //             //     saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + cols[i]);
-    //             //     if (hist2 != null) {
-    //             //         for (int j = i+1; j < cols.length; j++) {
-    //             //             if (cols[i] != cols[j]) {
-    //             //                 chartPanel = plotHeatmap(dataRows, cols[i], cols[j], outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
-    //             //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "heat_" + cols[i] + "_" + cols[j]);
-    //             //             }
-    //             //         }
-    //             //     }
-    //             // }
-    //             JPanel chartPanel = plotHistogram(dataRows, hist1, outputDirectory + File.separator + "hist_" + hist1);
-    //             saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + hist1);
-    //             if (hist2 != null) {
-    //                 if (hist1 != hist2) {
-    //                     chartPanel = plotHistogram(dataRows, hist2, outputDirectory + File.separator + "hist_" + hist2);
-    //                     saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "hist_" + hist2);
-    //                 }
-    //                 chartPanel = plotHeatmap(dataRows, hist1, hist2, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
-    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "heat_" + hist1 + "_" + hist2);
-    //             }
-    //         // Otherwise, assume the file contains Spot data and generate line plots.
-    //         } else {
-    //             Map<Integer, List<CSVRecord>> groupedData = groupByTrackId(dataRows);
-    //             for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-    //                 Integer trackId = entry.getKey();
-    //                 List<CSVRecord> rows = entry.getValue();
-    //                 JPanel chartPanel = plotSpotTrack(trackId, rows);
-    //                 saveChartPanelAsPNG(chartPanel, outputDirectory + File.separator + "spot_" + trackId);
-    //             }
-    //         }
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+    public static void main(String[] args) {}
 
     /**
      * Display the chart panel as an ImagePlus window.
@@ -454,26 +356,42 @@ public class Plots{
      * Creates a histogram for the specified column and saves it as a PNG file.
      * @param dataRows List of CSV records
      * @param columnName Name of the column
-     * @param filePath Path to the output file
+     * @param nBins Number of bins in the histogram
+     * @param width Width of output figure
+     * @param height Height of output figure
+     * @param visible Whether or not to display other stuff than the data
      * @throws IOException If an error occurs while saving the file
      */
-    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, String filePath) throws IOException {
-        // Dimensions
-        int width = 1600;
-        int height = 1000;
-
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height, boolean visible) throws IOException {
         // Extract data for the histogram
         List<Double> columnData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnName))).collect(Collectors.toList());
 
         // Create the histogram chart
-        Histogram histogram = new Histogram(columnData, 50);
+        Histogram histogram = new Histogram(columnData, nBins);
         CategoryChart chart = new CategoryChartBuilder().width(width).height(height).title("Histogram of " + columnName).xAxisTitle(columnName).yAxisTitle("Frequency").build();
         chart.addSeries(columnName, histogram.getxAxisData(), histogram.getyAxisData());
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         chart.getStyler().setXAxisLabelRotation(90);
+        if (!visible) {
+            chart.getStyler().setChartTitleVisible(false);
+            chart.getStyler().setAxisTitlesVisible(false);
+            chart.getStyler().setAxisTicksVisible(false);
+            chart.getStyler().setPlotGridLinesVisible(false);
+            chart.getStyler().setLegendPadding(2);
+            chart.getStyler().setChartPadding(2);
+        }
 
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
+    }
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height) throws IOException {
+        return plotHistogram(dataRows, columnName, nBins, width, height, true);
+    }
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, boolean visible) throws IOException {
+        return plotHistogram(dataRows, columnName, nBins, 1600, 1000, visible);
+    }
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins) throws IOException {
+        return plotHistogram(dataRows, columnName, nBins, 1600, 1000, true);
     }
 
     /**
@@ -481,28 +399,26 @@ public class Plots{
      * @param dataRows List of CSV records
      * @param columnX Name of the X column
      * @param columnY Name of the Y column
-     * @param filePath Path to the output file
+     * @param nBinsX Number of bins in the x-direction
+     * @param nBinsX Number of bins in the y-direction
+     * @param width Width of output figure
+     * @param height Height of output figure
+     * @param visible Whether or not to display other stuff than the data
      * @throws IOException If an error occurs while saving the file
      */
-    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, String filePath) throws IOException {
-        // Dimensions
-        int width = 1600;
-        int height = 1600;
-
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height, boolean visible) throws IOException {
         // Extract data for the heatmap
         List<Double> xData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnX))).collect(Collectors.toList());
         List<Double> yData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnY))).collect(Collectors.toList());
 
         // Create a 2D histogram for the heatmap
-        int numBinsX = 50;
-        int numBinsY = 50;
-        int[][] bins = new int[numBinsY][numBinsX];
+        int[][] bins = new int[nBinsY][nBinsX];
         double xMin = Collections.min(xData);
         double xMax = Collections.max(xData);
         double yMin = Collections.min(yData);
         double yMax = Collections.max(yData);
-        double xBinSize = (xMax - xMin) / numBinsX;
-        double yBinSize = (yMax - yMin) / numBinsY;
+        double xBinSize = (xMax - xMin) / nBinsX;
+        double yBinSize = (yMax - yMin) / nBinsY;
 
         // Sort values into bins
         for (int i = 0; i < xData.size(); i++) {
@@ -510,8 +426,8 @@ public class Plots{
             int yBin = (int) ((yData.get(i) - yMin) / yBinSize);
 
             // Edge case: include maximum
-            if (xBin == numBinsX) xBin--;
-            if (yBin == numBinsY) yBin--;
+            if (xBin == nBinsX) xBin--;
+            if (yBin == nBinsY) yBin--;
 
             bins[yBin][xBin]++;
         }
@@ -519,13 +435,13 @@ public class Plots{
         // Compute bin edges for display
         List<Double> xBins = new ArrayList<>();
         List<Double> yBins = new ArrayList<>();
-        for (int i = 0; i <= numBinsX; i++) xBins.add(xMin + i * xBinSize);
-        for (int i = 0; i <= numBinsY; i++) yBins.add(yMin + i * yBinSize);
+        for (int i = 0; i < nBinsX; i++) xBins.add(xMin + i * xBinSize);
+        for (int i = 0; i < nBinsY; i++) yBins.add(yMin + i * yBinSize);
 
         // Change bins (sparse matrix) into list of (coordinates + value) for display
         List<Number[]> zData = new ArrayList<Number[]>();
-        for (Integer j = 0; j < numBinsY; j++) {
-            for (Integer i = 0; i < numBinsX; i++) {
+        for (Integer j = 0; j < nBinsY; j++) {
+            for (Integer i = 0; i < nBinsX; i++) {
                 if (bins[j][i] != 0) zData.add(new Number[]{i, j, bins[j][i]});
             } 
         }
@@ -535,8 +451,65 @@ public class Plots{
                 .xAxisTitle(columnX).yAxisTitle(columnY).build();
         chart.addSeries("heatmap", xBins, yBins, zData);
         chart.getStyler().setXAxisLabelRotation(90);
+        if (!visible) {
+            chart.getStyler().setChartTitleVisible(false);
+            chart.getStyler().setAxisTitlesVisible(false);
+            chart.getStyler().setAxisTicksVisible(false);
+            chart.getStyler().setPlotGridLinesVisible(false);
+            chart.getStyler().setLegendVisible(false);
+            chart.getStyler().setChartPadding(2);
+        }
 
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
+    }
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height) throws IOException {
+        return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, width, height, true);
+    }
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, boolean visible) throws IOException {
+        return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, 1600, 1000, visible);
+    }
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY) throws IOException {
+        return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, 1600, 1000, true);
+    }
+
+    /**
+     * Creates a histogram/heatmap jointplot from selected columns of a dataframe.
+     * @param dataRows List of CSV records
+     * @param columns List of columns to be used in the jointplot
+     * @param panelSize Size of each individual square panel
+     * @param render Which side of the diagonal gets heatmaps
+     */
+    public static JPanel jointPanelPlot(List<CSVRecord> dataRows, List<String> columns, int panelSize, int render) throws IOException {
+        // Prepare the panel on which we draw the jointplot
+        JPanel chartPanel = new JPanel(new GridLayout(columns.size(), columns.size()));
+        boolean show;
+
+        for (int j = 0; j < columns.size(); j++) {
+            for (int i = 0; i < columns.size(); i++) {
+                // Option for heatmap layout
+                if (render > 0) {  // Display heatmaps above diagonal
+                    show = i > j;
+                } else if (render < 0) {  // Display below diagonal
+                    show = i < j;
+                } else show = i != j;  // Both above and below
+
+                // Tile the charts!
+                if (i == j) {  // Histogram on the diagonal
+                    chartPanel.add(plotHistogram(dataRows, columns.get(j), 20, panelSize, panelSize, false));
+                } else if (show) {  // Heatmaps according to the previous conditions
+                    chartPanel.add(plotHeatmap(dataRows, columns.get(i), columns.get(j), 20, 20, panelSize, panelSize, false));
+                } else {  // Blank everywhere else
+                    JPanel blankPanel = new JPanel();
+                    blankPanel.setSize(panelSize, panelSize);
+                    chartPanel.add(blankPanel);
+                }
+            }
+        }
+
+        return chartPanel;
+    }
+    public static JPanel jointPanelPlot(List<CSVRecord> dataRows, List<String> columns) throws IOException {
+        return jointPanelPlot(dataRows, columns, 250, -1);
     }
 }
