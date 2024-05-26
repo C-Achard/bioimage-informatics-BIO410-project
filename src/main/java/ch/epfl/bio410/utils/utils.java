@@ -71,7 +71,7 @@ public class utils {
      * @param imp contains the pixel data of the image and some basic methods to manipulate it.
      * @return the processed image as an ImagePlus
      */
-    public static ImagePlus remove_noise(ImagePlus imp, double sigma) {
+    public static ImagePlus remove_noise(ImagePlus imp) {
         //imp.show();
         /* Subtract Background but segmentation actually works best without subtracting background
             - Background subtraction plugin causes halo in background

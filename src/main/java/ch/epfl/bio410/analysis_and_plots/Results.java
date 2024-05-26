@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class implements functions to analyze the results of the tracking
@@ -126,7 +128,13 @@ public class Results {
     }
 
 
-
+    /**
+     * This method obtains the features of a colony for each frame of a track
+     * @param track_ID ID of the track
+     * @param tracks List of tracks from the tracking CSV file
+     * @param labels ImagePlus object containing the image with colony labels
+     * @param imageDIC ImagePlus object containing the DIC image
+     */
     public List<double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracks, ImagePlus labels, ImagePlus imageDIC) {
         Colonies colony = new Colonies(labels);
         List<double[][]> colonyFeatures = new ArrayList<>();
@@ -142,8 +150,31 @@ public class Results {
                     ImagePlus label = new ImagePlus("Frame", ip_labels.duplicate()); //get imageplus of frame i
                     ImageProcessor ip_DIC = imageDIC.getImageStack().getProcessor(i+1); // get frame i of dic
                     ImagePlus DICframe = new ImagePlus("Frame", ip_DIC.duplicate()); //get imageplus of frame i for dic too
-                    double[][] stats = colony.getLabelStats(label, DICframe);
+                    double[][] stats = Colonies.getLabelStats(label, DICframe);
                     colonyFeatures.add(stats);
+                }
+            }
+        }
+        return colonyFeatures;
+    }
+    /** This method obtaines the features of a colony for each frame of a track, from precomputed statistics
+     * @param track_ID ID of the track
+     * @param tracksWLabels List of tracks from the tracking CSV file
+     * @param stats Map of label ID, containing a double[][] of statistics for each frame
+     */
+    public Map<Integer, double[][]> getColonyFeatures(String track_ID, List<CSVRecord> tracksWLabels, Map<Integer, double[][]> stats) {
+        Map<Integer, double[][]> colonyFeatures = new HashMap<>();
+        for (CSVRecord track : tracksWLabels) {
+            if (track.get("TRACK_ID").equals(track_ID)) {
+                int start_frame = (int) Double.parseDouble(track.get("TRACK_START"));
+                int end_frame = (int) Double.parseDouble(track.get("TRACK_STOP"));
+                System.out.println("Track " + track_ID + " from frame " + start_frame + " to " + end_frame);
+                for (int i = start_frame; i <= end_frame; i++) {
+                    System.out.println("Frame " + i + " out of " + end_frame);
+                    // Get the label statistics for the colony in the current frame
+                    int colonyLabel = (int) Double.parseDouble(track.get("COLONY_LABEL"));
+                    double[][] stats_colony = stats.get(colonyLabel);
+                    colonyFeatures.put(i, stats_colony);
                 }
             }
         }

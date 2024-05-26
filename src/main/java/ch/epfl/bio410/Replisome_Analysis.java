@@ -7,12 +7,11 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
+import net.imglib2.ops.parse.token.Int;
 import org.apache.commons.csv.CSVRecord;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -47,18 +46,23 @@ public class Replisome_Analysis implements Command {
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
 		private final boolean runAnalysis = true;
+		// Colony assignment parameters
 		private final int colony_min_area = 50; // Colony assignment parameters, minimum colony area
+		// Detection parameters
 		private final double radius = 0.31; 	// Detection parameters, radius of the object in um
 		private final double threshold = 80.0;  // Detection parameters, quality threshold
 		private final boolean medianFilter = true; // Detection parameters, do median filter (GFP channel only, before detection in TrackMate)
-    	private final double sigma = 10;  // Detection parameters, sigma of the DoG
-
+		// Tracking parameters
 		private final double maxLinkDistance = 1.0; // Tracking parameters, max linking distance between objects
 		private final double maxGapDistance = 1.0; // Tracking parameters, max gap distance to close a track across frames
 		private final int maxFrameGap = 4; // Tracking parameters, max frame gap allowed for tracking
 		private final double durationFilter = 8.0; // Tracking parameters, duration filter (min duration of a track)
-
+		// Config
 		private TrackingConfig config;
+
+		// Misc utils
+		private ImagePlus colonyLabels;
+		public Map<Integer, double[][]> colonyStats;
 	/**
 	 * This method is called when the command is run.
 	 */
@@ -261,7 +265,7 @@ public class Replisome_Analysis implements Command {
 			this.config.printColonyConfig();
 			// Removing noise
 			IJ.log("Removing noise in DIC channel");
-			ImagePlus denoised = utils.remove_noise(imageDIC, sigma);
+			ImagePlus denoised = utils.remove_noise(imageDIC);
 			denoised.show();
 
 			// Segmentation
@@ -272,7 +276,10 @@ public class Replisome_Analysis implements Command {
 			// Assign colonies
 			Colonies colonies = new Colonies(imageDIC);
 			colonies.runColoniesComputation(this.config.colony_min_area, showColonyVoronoi);
-			colonies.colonyLabels.show();
+			this.colonyLabels = colonies.colonyLabels;
+			this.colonyLabels.show();
+			this.colonyStats = colonies.colonyStats;
+
 			if (showColonyVoronoi) {
 				colonies.voronoiDiagrams.show();
 			}
@@ -345,124 +352,72 @@ public class Replisome_Analysis implements Command {
 				}
 				// Or open a new one
 				else{
-					ImagePlus colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
-					colonyLabels.show();
+					this.colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
 					IJ.run("Tile");
-					utils.add_pixel_size(colonyLabels, imageDIC);
+					this.colonyLabels.hide();
+					utils.add_pixel_size(this.colonyLabels, imageDIC);
 					IJ.log("Assigning tracks to colony labels");
 					// Assign tracks to colonies and save the results
-					assignTracksToColonies(tracks, colonyLabels, imageNameWithoutExtension, path); //not sure if this works
+					assignTracksToColonies(tracks, this.colonyLabels, imageNameWithoutExtension, path); //not sure if this works
+					this.colonyLabels.show();
 				}
 
+				// Analysis : plot area per track //
 
-				/*
-				 * Example of how to access features for a track
-				 * See other accessible features in Colonies' setColumnMapping
-				 * Features are stored in a list of double[][] where the first index is the colony label and the second index is the feature
-				 * The different items of the list are the frames from TRACK_START to TRACK_STOP
-				 */
-				
-				//Getting features for a track
-				Colonies colony = new Colonies(imageDIC);
-				Results results = new Results();
-				List<CSVRecord>  tracks_with_labels = null;
-				ImagePlus colonyLabelss = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
+				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
-					tracks_with_labels = utils.readCsv(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-				String track_ID = "2";
-				List<double[][]> features = results.getColonyFeatures(track_ID, tracks_with_labels, colonyLabelss, imageDIC); //WindowManager.getImage(imageNameWithoutExtension+"_colony_labels.tif"), imageDIC);
-				int label_for_a_specific_track_ID = results.getLabel(track_ID, tracks_with_labels);
-
-				// access first value of first colony in second frame of features
-				double a = features.get(1)[label_for_a_specific_track_ID][colony.columnMapping.get("MEAN_INTENSITY")];
-				System.out.print(a);
-
-
-
-
-
-				// Plot the analysis
-				// Load the results
-				String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
-				File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
-				String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
-				File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
-
-				String plotSavePath = Paths.get(path, "results").toString();
-				// Create the "plots" folder and update the path
-				File plotsFolder = Paths.get(path, "results", "plots").toFile();
-				if (!plotsFolder.exists()) {
-					if (plotsFolder.mkdir()) {
-						IJ.log("Directory 'plots' is created!");
-					} else {
-						IJ.log("Failed to create directory 'plots'!");
-						throw new RuntimeException("Failed to create plots directory. Aborting.");
+					IJ.log("Fetching stats for tracks and colonies");
+					if (this.colonyStats == null) {
+						IJ.log("Computing stats for colonies");
+						this.colonyLabels.hide();
+						this.colonyStats = Colonies.computeStats(this.colonyLabels, imageDIC);
+						this.colonyLabels.show();
 					}
-				}
-				plotSavePath = Paths.get(path, "results", "plots").toString();
-				// Plot the analysis
-				try {
-					List<CSVRecord> dataRows = utils.readCsv(csvTracksPath,3);  // 3 right?
-		//			List<CSVRecord> dataRows = utils.readCsv(csvSpotsPath);
-					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(dataRows);
-
-					JPanel chartPanelTracks = Plots.plotTracksFeatures(groupedData.keySet().stream().limit(5).collect(Collectors.toList()), dataRows, "TRACK_DURATION");
-					//JPanel chartPanelPos = Plots.plotFeatures(1, groupedData.get(1), "TRACK_X_LOCATION", "TRACK_Y_LOCATION");
-
-					// Save plots
-					Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
-					//Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
-					// Show plots
-					Plots.showSavedPlot(plotSavePath + File.separator + "plot_tracks.png");
-					//Plots.showSavedPlot(plotSavePath + File.separator + "plot_pos.png");
-
-//				for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-//					Integer trackId = entry.getKey();
-//					List<CSVRecord> rows = entry.getValue();
-//					JPanel chartPanel = Plots.createChartPanel(trackId, rows);
-//					Plots.displayChartAsImagePlus(chartPanel);
-//					String savePath = plotSavePath + File.separator + "plot_" + trackId + ".png";
-//					Plots.saveChartPanelAsPNG(chartPanel, savePath);
-//					Plots.showSavedPlot(savePath);
-//					break;
-//				}
-
-					// Show in ImageJ
-//				Plots.displayChartAsImagePlus(chartPanelPos);
-//				Plots.displayChartAsImagePlus(chartPanelTracks);
-					// Save the chart panels as PNG files
-//				Plots.saveChartPanelAsPNG(chartPanelTracks, plotSavePath + File.separator + "plot_tracks");
-//				Plots.saveChartPanelAsPNG(chartPanelPos, plotSavePath + File.separator + "plot_pos");
-
-				} catch (IOException e) {
+					List<CSVRecord> tracks_with_labels = null;
+					Results results = new Results();
+					try {
+					// Load the tracks features with colony labels
+						tracks_with_labels = utils.readCsv(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+					// Hide colonyLabels while processing
+					IJ.log("Starting stats processing...");
+					this.colonyLabels.hide();
+					// Loop over tracks, and assign colony stats to each of them
+					// This is a mapping of mapping of double[][]
+					// First ID is the track ID, second ID is the colony ID, and the double[][] is the stats
+					Map<Integer, Map<Integer, double[][]>> trackStats = new HashMap<>();
+					// Group by track ID
+					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
+					for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+						IJ.log("Processing track " + entry.getKey());
+						Integer trackId = entry.getKey();
+						String trackIdString = Integer.toString(trackId);
+						List<CSVRecord> rows = entry.getValue();
+						// Get the colony label for the track
+						Map<Integer, double[][]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
+						trackStats.put(trackId, statsforTrack);
+					}
+					IJ.log("Finished processing stats");
+					// Show the colonyLabels again
+					this.colonyLabels.show();
+				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 
+				// Analysis : plot area per track //
 
-
-
-
-
-
-
-
-
+				// Additional analysis //
+				// Goal 1 : show position of tracks : mean displacement, directionality
+				// Goal 2 : show mobility :  Speed, duration
+				// Goal 3 : compare mobility across images (and also colonies ?)
 
 				IJ.log("All done!");
 
-			}
-			else{
+			} else{
 				IJ.log("ERROR : Cannot run analysis without both colonies and tracking results.");
 			}
-
-
-
-
-
-
 		}
     }
 
