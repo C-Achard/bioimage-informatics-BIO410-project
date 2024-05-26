@@ -4,16 +4,19 @@
 
 Here you will find information about running the plugin, available parameters and display options. 
 
+
 ## Launching the plugin
 
 To launch the plugin, open ImageJ and navigate to the `Plugins` menu. 
 The plugin will be listed under `BII > Replisome Analysis`.
 
-[//]: # (TODO : add image of the plugin menu in ImageJ, with interface) 
+![Plugin menu in ImageJ](resources/images/interface/plugin_menu_screen.png)
 
 ## Choosing an image
 
 Specify the path to the folder containing the images you wish to analyze, then select the image you wish to analyze.
+
+![Choosing an image](resources/images/interface/image_path.png)
 
 ## Choosing what to run
 
@@ -21,10 +24,12 @@ The plugin provides two distinct but related components, Colony Detection and Re
 
 - Colony detection : each bacteria in the DIC channel is assigned to a colony. Labels are also filtered to remove small outliers.
 - Replisome tracking : the replisomes in the GFP channel are tracked over time, using TrackMate.
-- Analysis : TODO
+- Analysis : Tracks and colonies features will be used to generate statistics and plots.
 
 The results from these components can then be used to run the Analysis section.
 You can run both or only one of these workflows by checking the boxes in the `Run` section.
+
+![Choosing what to run](resources/images/interface/run_section.png)
 
 !!! note
     Running the Analysis section requires that both tracking and colony detection have been run previously.
@@ -38,6 +43,8 @@ For default images, some configurations are already available, these will be use
 
 You may then select one of these configurations from the dropdown menu.
 If no valid configuration is available, the plugin will use the values specified in the interface, and "None" will be displayed in the menu.
+
+![Choosing a configuration](resources/images/interface/config_menu.png)
 
 !!! warning
     **KNOWN ISSUE** The configuration files are stored in the resources of the jar file.
@@ -59,6 +66,8 @@ Default configurations are available for :
 ### Specifying a new configuration
 
 If you wish to specify your own configuration, or no configuration is available, simply uncheck the box and fill in the fields as required.
+
+![Specifying a new configuration](resources/images/interface/plugin_params.png)
 
 !!! note
     If no valid configuration is available, the plugin will always use the values specified in the interface.
@@ -96,6 +105,8 @@ For complete in-depth information on the parameters, see the [TrackMate manual](
 #### Display options
 
 You can choose to display additional results
+
+![Display options](resources/images/interface/display_options.png)
 
 !!! warning
     Showing additional results will increase the memory footprint of the plugin.
@@ -136,9 +147,25 @@ Once colony detection is finished, colony labels will be shown in ImageJ.
 They will also be saved as {ImageName}_colony_labels.tif in the results folder.
 If you have selected to display the colony regions, the Voronoi diagram will also be shown and saved as {ImageName}_voronoi_diagram.tif.
 
+!!! note
+    The colony labels are saved as instance labels, where each colony is assigned a unique label (number) and the background is 0.
+
 #### Tracking
 
 Once the tracking has run, tracks will be shown on the image in ImageJ.
 
 They will also be saved as csv files in the results folder, one for spots and one for tracks.
 The files would be called spots_{ImageName}.csv and tracks_{ImageName}.csv. 
+
+The CSV rows contain the tracks, and the columns several features of the tracks.
+
+#### Analysis
+
+The analysis can be run as long as any of the previous components have been run at least once for the chosen image.
+This means you can either run all components at once, or run them separately and then run the analysis.
+
+The shown plots include :
+
+- **TODO** : add plots
+
+These will be saved in the results folder as png files, and shown in ImageJ.

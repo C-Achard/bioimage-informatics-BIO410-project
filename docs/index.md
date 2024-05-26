@@ -40,6 +40,23 @@ To install the plugin, take the provided .jar file in GitHub Packages and place 
 
 The plugin will then be available in the ImageJ menu under Plugins > Replisome Analysis.
 
+## Usage
+
+For information on how to use the plugin, see the [Plugin Usage](plugin_usage.md) page.
+
+## Troubleshooting
+
+The most common issue with the plugin is running out of memory. 
+If you encounter this issue, you can increase the memory available to ImageJ, or try running the workflows separately.
+
+!!! warning
+    **Memory issues**:
+    If you consistently run out of memory, you may want to adjust the memory setting in ImageJ.
+    Go to Edit>Options>Memory & Threads and adjust the memory settings as needed, using no more than 75% of your available RAM.
+    See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory) for more information.
+
+See the [Plugin Usage](plugin_usage.md) page for more information on running the plugin.
+
 ## Data availability
 
 ### OMERO
@@ -63,6 +80,3 @@ Specifications:
     - Channel 1 : Phase contrast (DIC), Bacteria morphology
     - Channel 2 : Fluorescence, replisome foci (sfGFP Fluorescent protein)
 
-## Usage
-
-For information on how to use the plugin, see the [Plugin Usage](plugin_usage.md) page.
