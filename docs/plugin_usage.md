@@ -109,10 +109,12 @@ You can choose to display additional results
 ![Display options](resources/images/interface/display_options.png)
 
 !!! warning
-    Showing additional results will increase the memory footprint of the plugin.
+    Showing some additional results will increase the memory footprint of the plugin.
     You may wish to run components separately if you are running out of memory.
+    This is less of a concern for plots.
 
 - **Show colony regions** : the Voronoi diagram used to assign spots to colonies will be displayed.
+- **Show all plots** : all available plots will be displayed. Otherwise, only the colony area per track over time and the features jointplot.
 
 ![Example of colony detection](resources/images/voronoi.gif)
 *Example of the Voronoi diagram used for colony detection (animated over time)*
