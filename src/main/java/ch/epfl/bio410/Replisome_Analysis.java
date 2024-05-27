@@ -403,6 +403,7 @@ public class Replisome_Analysis implements Command {
 				// Analysis : plot area per track //
 				JPanel areaPerTrackPlot = Plots.plotAreaPerTrack(this.trackStats);
 				try {
+					IJ.log("Plotting area per track...");
 					String areaTracksPlotPath = Paths.get(path, "results", "area_per_track_" + imageNameWithoutExtension).toString();
 					Plots.saveChartPanelAsPNG(areaPerTrackPlot, areaTracksPlotPath);
 					Plots.showSavedPlot(areaTracksPlotPath);
@@ -417,6 +418,7 @@ public class Replisome_Analysis implements Command {
 
 				// For each feature, plot heatmap against all other features and histogram
 				try {
+					IJ.log("Plotting heatmaps and histograms for track features...");
 					String jointPlotPath = Paths.get(path, "results", "joint_plot_" + imageNameWithoutExtension).toString();
 					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
 					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
