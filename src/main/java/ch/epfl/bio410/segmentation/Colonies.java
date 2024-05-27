@@ -19,6 +19,7 @@ public class Colonies {
      * We first use connected components labeling to segment the image into touching bacteria with a unique label per colony.
      * Then, we expand these labels in the first frame with a Voronoi diagram to obtain a "region" for each colony.
      * Finally, over each frame, we assign a given group of bacteria to a colony if they are mainly in the same region of the Voronoi diagram.
+     * This is then repeated for each frame.
      */
     private ImagePlus imageDIC; // holds the original DIC image
     public ImagePlus voronoiDiagrams; // contains the Voronoi diagrams for each frame, if kept
@@ -45,6 +46,7 @@ public class Colonies {
 
     /**
      * This method sets the column mapping for the statistics table from CLIJ2.
+     * This should be used with this.colonyStats to access the statistics for each label.
      * Usage : stats[i][columnMapping.get("IDENTIFIER")];
      */
     private void setColumnMapping() {
@@ -85,6 +87,12 @@ public class Colonies {
         columnMapping.put("MAX_DISTANCE_TO_CENTROID", 34);
         columnMapping.put("MAX_MEAN_DISTANCE_TO_CENTROID_RATIO", 35);
     }
+    /**
+     * This method returns the column mapping for the statistics table from CLIJ2.
+     * This should be used with this.colonyStats to access the statistics for each label.
+     * Example : stats[i][columnMapping.get("IDENTIFIER")];
+     * @return Map<String, Integer> containing the column mapping
+     */
     public static Map<String, Integer> getColumnMapping() {
         Map<String, Integer> columnMapping = new HashMap<>();
         columnMapping.put("IDENTIFIER", 0);

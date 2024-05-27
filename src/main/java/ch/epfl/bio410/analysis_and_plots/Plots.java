@@ -19,17 +19,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-
 import static ij.IJ.openImage;
 
 /**
  * Class for generation of plots, from CSV files or existing dataframes.
  */
+
 public class Plots{
     /**
      * Empty. Not meant to be run on its own.
      */
+
     public static void main(String[] args) {}
+
 
     /**
      * Display the chart panel as an ImagePlus window.

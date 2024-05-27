@@ -19,6 +19,17 @@ See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/m
 
 ## Installation and usage documentation
 
+### Dependencies
+
+**First, install the following dependencies manually :**
+
+- cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues.
+  Follow [this link](https://clij.github.io/clij2-docs/installationInFiji) to install clij2 in Fiji.
+- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `plugins/` folder of your ImageJ installation.
+- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `plugins/` folder of your ImageJ installation.
+
+### Install from .jar file
+
 To install the plugin, download the .jar from GitHub Packages on the right bar, and place it in the `plugins/` folder of your ImageJ installation.
 
 You can the find the plugin in the ImageJ menu under `Plugins > Replisome Analysis`.
@@ -51,8 +62,8 @@ This plugin uses :
 
 ## Authors
 
-- Mathilde Morelli
 - Cyril Achard
+- Mathilde Morelli
 - Linkai Dai
 
 ## Acknowledgements

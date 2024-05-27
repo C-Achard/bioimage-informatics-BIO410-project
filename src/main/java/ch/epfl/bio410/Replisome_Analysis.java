@@ -26,7 +26,7 @@ import ij.gui.GenericDialog;
 // import tracking from local package
 import ch.epfl.bio410.utils.utils;
 import ch.epfl.bio410.utils.TrackingConfig;
-import ch.epfl.bio410.segmentation.segmentation;
+import ch.epfl.bio410.segmentation.Segmentation;
 import ch.epfl.bio410.segmentation.Colonies;
 import ch.epfl.bio410.tracking.Tracking;
 import ch.epfl.bio410.analysis_and_plots.Plots;
@@ -232,8 +232,6 @@ public class Replisome_Analysis implements Command {
 			}
 		}
 
-
-
 		// show the image
 		String imagePath = Paths.get(path, image).toString();
 		// Results
@@ -268,7 +266,7 @@ public class Replisome_Analysis implements Command {
 
 			// Segmentation
 			IJ.log("Segmentation of DIC channel");
-			segmentation.segment(denoised);
+			Segmentation.segment(denoised);
 			denoised.show();
 
 			// Assign colonies
@@ -321,7 +319,7 @@ public class Replisome_Analysis implements Command {
 			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
 			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
 			try {
-				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath);
+				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath, imagePath);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -359,8 +357,6 @@ public class Replisome_Analysis implements Command {
 					assignTracksToColonies(tracks, this.colonyLabels, imageNameWithoutExtension, path); //not sure if this works
 					this.colonyLabels.show();
 				}
-
-				// Analysis : plot area per track //
 
 				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
