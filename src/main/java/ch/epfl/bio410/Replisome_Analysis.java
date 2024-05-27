@@ -338,6 +338,8 @@ public class Replisome_Analysis implements Command {
 				// Load the tracks
 				try {
 					tracks = utils.readCsv(Paths.get(resultsPath, "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+					utils.describe(tracks, 3, Paths.get(resultsPath, "track_stats_" + imageNameWithoutExtension + ".csv").toString());
+					IJ.log("Calculated summary statistics of the track data.");
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
