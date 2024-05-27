@@ -179,6 +179,7 @@ public class Replisome_Analysis implements Command {
 		// Display options
 		dlg.addMessage("Display options :\n(WARNING : May cause memory issues for large images)");
 		dlg.addCheckbox("Show colony regions (Voronoi diagram for each frame)", false);
+		dlg.addCheckbox("Show all plots", false);
 		dlg.showDialog();
 		if (dlg.wasCanceled()) return;
 
@@ -206,6 +207,7 @@ public class Replisome_Analysis implements Command {
 		double durationFilter = dlg.getNextNumber();
 		//// DISPLAY
 		boolean showColonyVoronoi = dlg.getNextBoolean();
+		boolean showAllPlots = dlg.getNextBoolean();
 
 		// Set the config if needed (use existing if set or no config available)
 		if (!useExistingConfig || !isConfigAvailable) {
