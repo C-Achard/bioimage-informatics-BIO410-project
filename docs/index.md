@@ -88,6 +88,7 @@ If you encounter this issue, you can increase the memory available to ImageJ, or
 
 See the [Plugin Usage](plugin_usage.md) page for more information on running the plugin.
 
+
 ### Class not found issues
 
 If you do not install clij2 manually, you may face some ClassNotFound issues.
@@ -99,8 +100,6 @@ Additionally, make sure all the dependencies are correctly installed.
 If, when launching the plugin, the GUI window is too big (this can happen on a 13 inches screen), and you cannot see the path browser or the OK button, 
 **decrease the GUI scale to ~ 0.7** and **change the Menu font size to 18 points** in ``Edit > Options > Appearance...``
 This will allow you to see the full window and use the plugin.
-
-
 
 ## Data availability
 
