@@ -358,8 +358,6 @@ public class Replisome_Analysis implements Command {
 					this.colonyLabels.show();
 				}
 
-				// Analysis : plot area per track //
-
 				// if colonies is not null, access the stats from there, otherwise recompute them
 				try {
 					IJ.log("Fetching stats for tracks and colonies");
@@ -405,11 +403,28 @@ public class Replisome_Analysis implements Command {
 				// Analysis : plot area per track //
 				JPanel areaPerTrackPlot = Plots.plotAreaPerTrack(this.trackStats);
 				try {
+					IJ.log("Plotting area per track...");
 					String areaTracksPlotPath = Paths.get(path, "results", "area_per_track_" + imageNameWithoutExtension).toString();
 					Plots.saveChartPanelAsPNG(areaPerTrackPlot, areaTracksPlotPath);
 					Plots.showSavedPlot(areaTracksPlotPath);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
+				}
+
+				// Analysis : histograms and heatmaps for track features //
+				List<String> features = Arrays.asList(
+					"NUMBER_SPOTS", "NUMBER_GAPS", "LONGEST_GAP", "TRACK_DURATION", "TRACK_START", "TRACK_STOP", "TRACK_DISPLACEMENT", "TRACK_X_LOCATION", "TRACK_Y_LOCATION", "TRACK_MEAN_SPEED", "TRACK_MAX_SPEED", "TRACK_MIN_SPEED", "TRACK_MEDIAN_SPEED", "TRACK_STD_SPEED", "TRACK_MEAN_QUALITY", "TOTAL_DISTANCE_TRAVELED", "MAX_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_STRAIGHT_LINE_SPEED", "LINEARITY_OF_FORWARD_PROGRESSION", "MEAN_DIRECTIONAL_CHANGE_RATE"
+				);
+
+				// For each feature, plot heatmap against all other features and histogram
+				try {
+					IJ.log("Plotting heatmaps and histograms for track features...");
+					String jointPlotPath = Paths.get(path, "results", "joint_plot_" + imageNameWithoutExtension).toString();
+					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
+					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
+					Plots.showSavedPlot(jointPlotPath);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 
 				// Additional analysis //
