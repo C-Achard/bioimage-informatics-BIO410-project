@@ -39,11 +39,6 @@ Various plots and statistics can then be generated from the data.
 The plugin is designed to work with 2D+t images of bacteria.
 Due to the size of the images, a computer with at least 8GB of RAM is recommended; 16GB is preferred.
 
-!!! note
-    If you consistently run out of memory, you may want to adjust the memory setting in ImageJ.
-    Go to Edit>Options>Memory & Threads and adjust the memory settings as needed, using no more than 75% of your available RAM.
-    See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory) for more information.
-
 ## Installation
 
 !!! note
