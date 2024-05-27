@@ -170,5 +170,14 @@ This means you can either run all components at once, or run them separately and
 The shown plots include :
 
 - **Colony area over time per track** : the area of the colony over time, for each track.
+- **Track duration** : the duration of each track.
+- **Track displacement** : the displacement of each track.
+- **Track mean speed** : the mean speed of each track.
+- **Track total distance** : the total distance travelled by each track.
+- **Track confinement ratio** : the confinement ratio of each track, defined as net distance over total distance travelled.
+- **Track mean directional change rate** : the mean directional change rate of each track.
+- **Joint plot** : a joint plot of all track features, including histograms and scatter plots.
 
-These will be saved in the results folder as png files, and shown in ImageJ.
+You may find more information on the features on the [TrackMate website](https://imagej.net/plugins/trackmate/analyzers/#track-analyzers).
+
+These will be saved in the `results/plots/` folder as .png files, and shown in ImageJ.
