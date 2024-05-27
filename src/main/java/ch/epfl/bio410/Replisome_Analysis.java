@@ -426,6 +426,7 @@ public class Replisome_Analysis implements Command {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				IJ.run("Tile");
 
 				// Additional analysis //
 				// Goal 1 : show position of tracks : mean displacement, directionality
