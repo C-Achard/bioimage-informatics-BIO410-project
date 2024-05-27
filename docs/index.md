@@ -39,29 +39,31 @@ Various plots and statistics can then be generated from the data.
 The plugin is designed to work with 2D+t images of bacteria.
 Due to the size of the images, a computer with at least 8GB of RAM is recommended; 16GB is preferred.
 
-!!! note
-    If you consistently run out of memory, you may want to adjust the memory setting in ImageJ.
-    Go to Edit>Options>Memory & Threads and adjust the memory settings as needed, using no more than 75% of your available RAM.
-    See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory) for more information.
-
 ## Installation
 
 !!! note
-    Please note that due to the hardware available to us, this plugin has only been tested on Windows.
-    Please contact us if you encounter any issues on other operating systems.
+    - Please note that due to the hardware available to us, this plugin has only been tested on Windows.
+    - Please contact us if you encounter any issues on other operating systems.
+    - On Windows, make sure to have Fiji installed in the root of your drive (e.g. `C:\Fiji.app`).
 
 ### Dependencies
 
 **First, install the following dependencies manually** :
 
-- cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues. 
+!!! note
+    **All the .jar dependencies must go in the `jars/` folder of your Fiji installation.**
+    This is not the same as the `plugins/jars` folder.
+
+- cilj2 : due to the GPU acceleration provided by clij, it is safer to install it from source to ensure there are no drivers issues. 
   Follow [this link](https://clij.github.io/clij2-docs/installationInFiji) to install clij2 in Fiji.
-- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `plugins/` folder of your ImageJ installation.
-- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `plugins/` folder of your ImageJ installation.
+- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `jars/` folder of your ImageJ installation.
+- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `jars/` folder of your ImageJ installation.
 
 !!! warning
     Make sure to install the dependencies before installing the plugin, with the correct versions.
     The plugin may not work if you use the latest version of commons-csv.
+    **Also ensure Fiji is installed in the root of your drive (e.g. `C:\Fiji.app`).**
+    **If you already have XChart installed, make sure to use the correct version. Avoid duplicates in the `jars/` folder.**
 
 ### Install from .jar file
 

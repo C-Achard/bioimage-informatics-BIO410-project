@@ -38,7 +38,7 @@ import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
 public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
 		private boolean isConfigAvailable = false;
-		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
+		private String path = Paths.get(System.getProperty("user.home")).toString();
 		private String[] fileList = new String[]{};
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
@@ -179,6 +179,7 @@ public class Replisome_Analysis implements Command {
 		// Display options
 		dlg.addMessage("Display options :\n(WARNING : May cause memory issues for large images)");
 		dlg.addCheckbox("Show colony regions (Voronoi diagram for each frame)", false);
+		dlg.addCheckbox("Show all plots", false);
 		dlg.showDialog();
 		if (dlg.wasCanceled()) return;
 
@@ -206,6 +207,7 @@ public class Replisome_Analysis implements Command {
 		double durationFilter = dlg.getNextNumber();
 		//// DISPLAY
 		boolean showColonyVoronoi = dlg.getNextBoolean();
+		boolean showAllPlots = dlg.getNextBoolean();
 
 		// Set the config if needed (use existing if set or no config available)
 		if (!useExistingConfig || !isConfigAvailable) {
@@ -238,7 +240,8 @@ public class Replisome_Analysis implements Command {
 		// Save the results to CSV
 		String imageNameWithoutExtension = image.substring(0, image.lastIndexOf('.'));
 		// create "results" folder if it doesn't exist
-		File resultsFolder = Paths.get(path, "results").toFile();
+		String resultsPath = Paths.get(path, "results").toString();
+		File resultsFolder = new File(resultsPath);
 
 
 
@@ -314,10 +317,8 @@ public class Replisome_Analysis implements Command {
 					throw new RuntimeException("Failed to create results directory. Aborting.");
 				}
 			}
-			String spotsCSVName = "/results/spots_" + imageNameWithoutExtension + ".csv";
-			String tracksCSVName = "/results/tracks_" + imageNameWithoutExtension + ".csv";
-			File csvSpotsPath = Paths.get(path, spotsCSVName).toFile();
-			File csvTracksPath = Paths.get(path, tracksCSVName).toFile();
+			File csvSpotsPath = Paths.get(resultsPath, "spots_" + imageNameWithoutExtension + ".csv").toFile();
+			File csvTracksPath = Paths.get(resultsPath, "tracks_" + imageNameWithoutExtension + ".csv").toFile();
 			try {
 				tracker.saveFeaturesToCSV(model, csvSpotsPath, csvTracksPath, imagePath);
 			} catch (IOException e) {
@@ -336,7 +337,7 @@ public class Replisome_Analysis implements Command {
 				List<CSVRecord> tracks = null;
 				// Load the tracks
 				try {
-					tracks = utils.readCsv(Paths.get(path,  "results", "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
+					tracks = utils.readCsv(Paths.get(resultsPath, "tracks_" + imageNameWithoutExtension + ".csv").toString(), 3);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -348,7 +349,7 @@ public class Replisome_Analysis implements Command {
 				}
 				// Or open a new one
 				else{
-					this.colonyLabels = IJ.openImage(Paths.get(path, "results", imageNameWithoutExtension + "_colony_labels.tif").toString());
+					this.colonyLabels = IJ.openImage(Paths.get(resultsPath, imageNameWithoutExtension + "_colony_labels.tif").toString());
 					IJ.run("Tile");
 					this.colonyLabels.hide();
 					utils.add_pixel_size(this.colonyLabels, imageDIC);
@@ -371,7 +372,7 @@ public class Replisome_Analysis implements Command {
 					Results results = new Results();
 					try {
 					// Load the tracks features with colony labels
-						tracks_with_labels = utils.readCsv(Paths.get(path, "results", "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+						tracks_with_labels = utils.readCsv(Paths.get(resultsPath, "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
@@ -400,11 +401,27 @@ public class Replisome_Analysis implements Command {
 					throw new RuntimeException(e);
 				}
 
+				/*********
+				 * Plots *
+				 *********/
+				
+				String plotsPath = Paths.get(resultsPath, "plots").toString();
+				File plotsFolder = Paths.get(plotsPath).toFile();
+				// If plots folder does not exist, create it
+				if (!plotsFolder.exists()) {
+					if (plotsFolder.mkdir()) {
+						IJ.log("Directory is created!");
+					} else {
+						IJ.log("Failed to create directory!");
+						throw new RuntimeException("Failed to create plots directory. Aborting.");
+					}
+				}
+
 				// Analysis : plot area per track //
 				JPanel areaPerTrackPlot = Plots.plotAreaPerTrack(this.trackStats);
 				try {
 					IJ.log("Plotting area per track...");
-					String areaTracksPlotPath = Paths.get(path, "results", "area_per_track_" + imageNameWithoutExtension).toString();
+					String areaTracksPlotPath = Paths.get(plotsPath, "area_per_track_" + imageNameWithoutExtension).toString();
 					Plots.saveChartPanelAsPNG(areaPerTrackPlot, areaTracksPlotPath);
 					Plots.showSavedPlot(areaTracksPlotPath);
 				} catch (IOException e) {
@@ -419,13 +436,30 @@ public class Replisome_Analysis implements Command {
 				// For each feature, plot heatmap against all other features and histogram
 				try {
 					IJ.log("Plotting heatmaps and histograms for track features...");
-					String jointPlotPath = Paths.get(path, "results", "joint_plot_" + imageNameWithoutExtension).toString();
+					String jointPlotPath = Paths.get(plotsPath, "joint_plot_" + imageNameWithoutExtension).toString();
 					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
 					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
-					Plots.showSavedPlot(jointPlotPath);
+					if (showAllPlots) Plots.showSavedPlot(jointPlotPath);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+
+				// Specific histograms
+				List<String> histFeatures = Arrays.asList(
+					"TRACK_DURATION", "TRACK_DISPLACEMENT", "TRACK_MEAN_SPEED", "TOTAL_DISTANCE_TRAVELED", "CONFINEMENT_RATIO", "MEAN_DIRECTIONAL_CHANGE_RATE"
+				);
+				try {
+					for (String feature : histFeatures) {
+						String histPath = Paths.get(plotsPath, "hist_" + feature + "_" + imageNameWithoutExtension).toString();
+						JPanel histChart = Plots.plotHistogram(tracks, feature, 50);
+						Plots.saveChartPanelAsPNG(histChart, histPath);
+						Plots.showSavedPlot(histPath);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				IJ.run("Tile");
 
 				// Additional analysis //
 				// Goal 1 : show position of tracks : mean displacement, directionality

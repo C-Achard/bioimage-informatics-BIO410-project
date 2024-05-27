@@ -21,12 +21,15 @@ See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/m
 
 ### Dependencies
 
-**First, install the following dependencies manually :**
+First, install the following dependencies **manually** :
 
-- cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues.
+**All the .jar dependencies must go in the `jars/` folder of your Fiji installation.**
+This is not the same as the `plugins/jars` folder.
+
+- cilj2 : due to the GPU acceleration provided by clij, it is safer to install it from source to ensure there are no drivers issues.
   Follow [this link](https://clij.github.io/clij2-docs/installationInFiji) to install clij2 in Fiji.
-- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `plugins/` folder of your ImageJ installation.
-- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `plugins/` folder of your ImageJ installation.
+- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `jars/` folder of your ImageJ installation.
+- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `jars/` folder of your ImageJ installation.
 
 ### Install from .jar file
 
@@ -54,11 +57,13 @@ Specifications:
 This plugin uses :
 
 - [ImageJ](https://imagej.net/) : Image processing and analysis in Java
-- [OMERO](https://www.openmicroscopy.org/omero/) : Open Microscopy Environment for biological imaging
 - [Fiji](https://fiji.sc/) : ImageJ distribution with plugins and libraries
 - [TrackMate](https://imagej.net/plugins/trackmate/) : ImageJ plugin for the analysis of single-particle tracking data
 - [clij2](https://clij.github.io/) : GPU-accelerated image processing in Image
+- [commons-csv](https://commons.apache.org/proper/commons-csv/) : CSV file manipulation library
+- [xchart](https://knowm.org/open-source/xchart/) : Plotting library for Java
 - [Maven](https://maven.apache.org/) : Software project management and comprehension tool
+- [OMERO](https://www.openmicroscopy.org/omero/) : Open Microscopy Environment for biological imaging
 
 ## Authors
 
