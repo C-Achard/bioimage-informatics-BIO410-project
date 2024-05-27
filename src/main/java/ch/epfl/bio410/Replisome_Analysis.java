@@ -38,7 +38,7 @@ import static ch.epfl.bio410.analysis_and_plots.Results.assignTracksToColonies;
 public class Replisome_Analysis implements Command {
 		// Default path is 5 folders above the current folder, in DATA
 		private boolean isConfigAvailable = false;
-		private String path = Paths.get(System.getProperty("user.home"), "Desktop", "Code", "bioimage-informatics-BIO410-project", "DATA").toString();
+		private String path = Paths.get(System.getProperty("user.home")).toString();
 		private String[] fileList = new String[]{};
 		private final boolean runColonies = true;
 		private final boolean runTracking = true;
