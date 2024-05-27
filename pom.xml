@@ -13,7 +13,7 @@
 
     <groupId>ch.epfl.bio410</groupId>
     <artifactId>replisome-analysis</artifactId> <!-- Replace the artifact id by your project name -->
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
 
     <name>Project template</name> <!-- Replace the name & description by your project -->
     <description>Replisome Analysis Plugin : part of the BIO-410 course @ EPFL</description>
