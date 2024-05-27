@@ -151,7 +151,7 @@ public class TrackingConfig {
         }
         if (showTrackingParams) {
             IJ.log("- Detector radius : " + this.detector_radius + "um");
-            IJ.log("- Detector quality threshold : " + this.detector_threshold + "um");
+            IJ.log("- Detector quality threshold : " + this.detector_threshold);
             IJ.log("- Detector using median filter : " + this.detector_median_filter);
             IJ.log("- Tracker max distance for linking : " + this.tracker_linking_max_distance + "um");
             IJ.log("- Tracker gap closing max distance : " + this.tracker_gap_closing_max_distance + "um");
