@@ -297,6 +297,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hardware-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hardware requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -486,6 +495,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hardware-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hardware requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -637,13 +655,34 @@ The plugin is designed to analyze the dynamics of DNA replication in bacteria, s
 </p>
 
 <p>Various plots and statistics can then be generated from the data.</p>
+<h2 id="hardware-requirements">Hardware requirements</h2>
+<p>The plugin is designed to work with 2D+t images of bacteria.
+Due to the size of the images, a computer with at least 8GB of RAM is recommended; 16GB is preferred.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you consistently run out of memory, you may want to adjust the memory setting in ImageJ.
+Go to Edit&gt;Options&gt;Memory &amp; Threads and adjust the memory settings as needed, using no more than 75% of your available RAM.
+See <a href="https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/managing-memory.html#increasing-imagej-fijis-memory">this page</a> for more information.</p>
+</div>
 <h2 id="installation">Installation</h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please note that due to the hardware available to us, this plugin has only been tested on Windows.
+Please contact us if you encounter any issues on other operating systems.</p>
+</div>
 <h3 id="dependencies">Dependencies</h3>
 <p><strong>First, install the following dependencies manually</strong> :</p>
 <ul>
 <li>cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues. 
   Follow <a href="https://clij.github.io/clij2-docs/installationInFiji">this link</a> to install clij2 in Fiji.</li>
+<li>commons-csv : download the <strong>1.8</strong> version from <a href="https://archive.apache.org/dist/commons/csv/binaries/">here</a> and place the .jar in the <code>plugins/</code> folder of your ImageJ installation.</li>
+<li>xchart : download the <strong>3.8.8</strong> version <a href="https://knowm.org/open-source/xchart/xchart-change-log/">here</a> and place the .jar in the <code>plugins/</code> folder of your ImageJ installation.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Make sure to install the dependencies before installing the plugin, with the correct versions.
+The plugin may not work if you use the latest version of commons-csv.</p>
+</div>
 <h3 id="install-from-jar-file">Install from .jar file</h3>
 <p>To install the plugin, take the provided .jar file in GitHub Packages and place it in the plugins folder of your ImageJ installation.</p>
 <p>The plugin will then be available in the ImageJ menu under Plugins &gt; Replisome Analysis.</p>
@@ -663,9 +702,12 @@ See <a href="https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/mana
 <p>See the <a href="plugin_usage/">Plugin Usage</a> page for more information on running the plugin.</p>
 <h3 id="class-not-found-issues">Class not found issues</h3>
 <p>If you do not install clij2 manually, you may face some ClassNotFound issues.
-To solve this, install clij2 manually and restart ImageJ.</p>
+To solve this, install clij2 manually and restart ImageJ.
+Additionally, make sure all the dependencies are correctly installed.</p>
 <h3 id="gui-window-too-big">GUI window too big</h3>
-<p>If, when launching the plugin, the GUI window is too big (this can happen on 13 inch screen), and you cannot see the path browser or the OK button, there is an easy fix. Simply <strong>decrease the GUI scale to ~ 0.7</strong> and <strong>change the Menu font size to 18 points</strong> in Edit &gt; Options &gt; Apperance... </p>
+<p>If, when launching the plugin, the GUI window is too big (this can happen on a 13 inches screen), and you cannot see the path browser or the OK button, 
+<strong>decrease the GUI scale to ~ 0.7</strong> and <strong>change the Menu font size to 18 points</strong> in <code>Edit &gt; Options &gt; Appearance...</code>
+This will allow you to see the full window and use the plugin.</p>
 <h2 id="data-availability">Data availability</h2>
 <h3 id="omero">OMERO</h3>
 <p>The plugin is designed to work with 2D+t images of bacteria.
