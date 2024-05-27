@@ -25,6 +25,8 @@ See [this page](https://docs.openmicroscopy.org/bio-formats/5.7.1/users/imagej/m
 
 - cilj2 : due to the GPU acceleration provided by clij, it is safer to instal it from source to ensure there are no drivers issues.
   Follow [this link](https://clij.github.io/clij2-docs/installationInFiji) to install clij2 in Fiji.
+- commons-csv : download the **1.8** version from [here](https://archive.apache.org/dist/commons/csv/binaries/) and place the .jar in the `plugins/` folder of your ImageJ installation.
+- xchart : download the **3.8.8** version [here](https://knowm.org/open-source/xchart/xchart-change-log/) and place the .jar in the `plugins/` folder of your ImageJ installation.
 
 ### Install from .jar file
 
