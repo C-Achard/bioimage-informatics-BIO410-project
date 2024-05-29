@@ -173,6 +173,52 @@ public class Plots{
     public static JPanel plotFeatures(Integer trackId, List<CSVRecord> rows, String xFeature, String yFeature){
         return plotFeatures(trackId, rows, xFeature, yFeature, 1600, 800);
     }
+    /**
+     * Groups the data rows by COLONY_LABEL.
+     * @param dataRows List of CSV records
+     * @return Map where key is COLONY_LABEL and value is list of records with that COLONY_LABEL
+     */
+    public static Map<String, List<CSVRecord>> groupByColonyLabel(List<CSVRecord> dataRows) {
+        return dataRows.stream().collect(Collectors.groupingBy(row -> row.get("COLONY_LABEL")));
+    }
+
+    /**
+     * Plot the mean of a chosen feature for each COLONY_LABEL.
+     * @param dataRows List of CSV records
+     * @param feature The feature to plot
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotMeanFeaturePerColonyLabel(List<CSVRecord> dataRows, String feature) {
+        // Group data by COLONY_LABEL
+        Map<String, List<CSVRecord>> groupedData = groupByColonyLabel(dataRows);
+
+        // Prepare data for the chart
+        List<String> xData = new ArrayList<>();
+        List<Double> yData = new ArrayList<>();
+
+        for (Map.Entry<String, List<CSVRecord>> entry : groupedData.entrySet()) {
+            String colonyLabel = entry.getKey();
+            List<CSVRecord> records = entry.getValue();
+
+            // Calculate the mean of the chosen feature for this COLONY_LABEL
+            double mean = records.stream()
+                    .mapToDouble(record -> Double.parseDouble(record.get(feature)))
+                    .average()
+                    .orElse(0.0);
+
+            xData.add(colonyLabel);
+            yData.add(mean);
+        }
+
+        // Create the CategoryChart
+        CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title("Mean " + feature + " per COLONY_LABEL").xAxisTitle("COLONY_LABEL").yAxisTitle("Mean " + feature).build();
+        chart.addSeries("Mean " + feature, xData, yData);
+        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
+        chart.getStyler().setXAxisLabelRotation(90);
+
+        // Put chart on a panel for easier manipulation
+        return new XChartPanel<>(chart);
+    }
 
     /**
      * Plot a collection of features against a single x-feature for a single track.

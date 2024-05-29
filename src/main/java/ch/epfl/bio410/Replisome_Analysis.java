@@ -61,6 +61,8 @@ public class Replisome_Analysis implements Command {
 		private ImagePlus colonyLabels;
 		public Map<Integer, double[][]> colonyStats;
 		public Map<Integer, Map<Integer, double[]>> trackStats;
+		public List<CSVRecord> tracksWithLabels;
+
 	/**
 	 * This method is called when the command is run.
 	 */
@@ -368,11 +370,10 @@ public class Replisome_Analysis implements Command {
 						this.colonyStats = Colonies.computeStats(this.colonyLabels, imageDIC);
 						this.colonyLabels.show();
 					}
-					List<CSVRecord> tracks_with_labels = null;
 					Results results = new Results();
 					try {
 					// Load the tracks features with colony labels
-						tracks_with_labels = utils.readCsv(Paths.get(resultsPath, "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+						this.tracksWithLabels = utils.readCsv(Paths.get(resultsPath, "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
@@ -384,7 +385,7 @@ public class Replisome_Analysis implements Command {
 					// First ID is the track ID, second ID is the frame, and the double[] is the stats
 					this.trackStats = new HashMap<>();
 					// Group by track ID
-					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
+					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(this.tracksWithLabels);
 					for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
 						IJ.log("Processing track " + entry.getKey());
 						Integer trackId = entry.getKey();
@@ -440,6 +441,15 @@ public class Replisome_Analysis implements Command {
 					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
 					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
 					if (showAllPlots) Plots.showSavedPlot(jointPlotPath);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				try {
+					String plotMeanFeaturePerColonyPath = Paths.get(plotsPath, "mean_feature_per_colony_" + imageNameWithoutExtension).toString();
+					JPanel meanFeaturePerColonyChart = Plots.plotMeanFeaturePerColonyLabel(this.tracksWithLabels, "TRACK_DURATION");
+					Plots.saveChartPanelAsPNG(meanFeaturePerColonyChart, plotMeanFeaturePerColonyPath);
+					Plots.showSavedPlot(plotMeanFeaturePerColonyPath);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
