@@ -362,46 +362,42 @@ public class Replisome_Analysis implements Command {
 				}
 
 				// if colonies is not null, access the stats from there, otherwise recompute them
-				try {
-					IJ.log("Fetching stats for tracks and colonies");
-					if (this.colonyStats == null) {
-						IJ.log("Computing stats for colonies");
-						this.colonyLabels.hide();
-						this.colonyStats = Colonies.computeStats(this.colonyLabels, imageDIC);
-						this.colonyLabels.show();
-					}
-					List<CSVRecord> tracks_with_labels = null;
-					Results results = new Results();
-					try {
-					// Load the tracks features with colony labels
-						tracks_with_labels = utils.readCsv(Paths.get(resultsPath, "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					// Hide colonyLabels while processing
-					IJ.log("Starting stats processing...");
+				IJ.log("Fetching stats for tracks and colonies");
+				if (this.colonyStats == null) {
+					IJ.log("Computing stats for colonies");
 					this.colonyLabels.hide();
-					// Loop over tracks, and assign colony stats to each of them
-					// This is a mapping of mapping of double[][]
-					// First ID is the track ID, second ID is the frame, and the double[] is the stats
-					this.trackStats = new HashMap<>();
-					// Group by track ID
-					Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
-					for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
-						IJ.log("Processing track " + entry.getKey());
-						Integer trackId = entry.getKey();
-						String trackIdString = Integer.toString(trackId);
-						List<CSVRecord> rows = entry.getValue();
-						// Get the colony label for the track
-						Map<Integer, double[]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
-						this.trackStats.put(trackId, statsforTrack);
-					}
-					IJ.log("Finished processing stats");
-					// Show the colonyLabels again
+					this.colonyStats = Colonies.computeStats(this.colonyLabels, imageDIC);
 					this.colonyLabels.show();
-				} catch (Exception e) {
+				}
+				List<CSVRecord> tracks_with_labels = null;
+				Results results = new Results();
+				try {
+				// Load the tracks features with colony labels
+					tracks_with_labels = utils.readCsv(Paths.get(resultsPath, "tracks_with_colonylabels_" + imageNameWithoutExtension + ".csv").toString(), 0);
+				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
+				// Hide colonyLabels while processing
+				IJ.log("Starting stats processing...");
+				this.colonyLabels.hide();
+				// Loop over tracks, and assign colony stats to each of them
+				// This is a mapping of mapping of double[][]
+				// First ID is the track ID, second ID is the frame, and the double[] is the stats
+				this.trackStats = new HashMap<>();
+				// Group by track ID
+				Map<Integer, List<CSVRecord>> groupedData = Plots.groupByTrackId(tracks_with_labels);
+				for (Map.Entry<Integer, List<CSVRecord>> entry : groupedData.entrySet()) {
+					IJ.log("Processing track " + entry.getKey());
+					Integer trackId = entry.getKey();
+					String trackIdString = Integer.toString(trackId);
+					List<CSVRecord> rows = entry.getValue();
+					// Get the colony label for the track
+					Map<Integer, double[]> statsforTrack = results.getColonyFeatures(trackIdString, rows, this.colonyStats);
+					this.trackStats.put(trackId, statsforTrack);
+				}
+				IJ.log("Finished processing stats");
+				// Show the colonyLabels again
+				this.colonyLabels.show();
 
 				/*********
 				 * Plots *
@@ -439,7 +435,7 @@ public class Replisome_Analysis implements Command {
 				try {
 					IJ.log("Plotting heatmaps and histograms for track features...");
 					String jointPlotPath = Paths.get(plotsPath, "joint_plot_" + imageNameWithoutExtension).toString();
-					JPanel jointChart = Plots.jointPanelPlot(tracks, features);
+					JPanel jointChart = Plots.plotJointPanel(tracks, features);
 					Plots.saveChartPanelAsPNG(jointChart, jointPlotPath);
 					if (showAllPlots) Plots.showSavedPlot(jointPlotPath);
 				} catch (IOException e) {

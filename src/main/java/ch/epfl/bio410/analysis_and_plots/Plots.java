@@ -71,12 +71,32 @@ public class Plots{
     }
 
     /**
-     * Groups the data rows by TRACK_ID.
+     * Groups the data rows by a given column name
+     * @param dataRows List of CSV records
+     * @param colName Name of column to group by. Must contain integers as IDs
+     * @return Map where key is the ID of the group, and value is list of records in that group
+     */
+    public static Map<Integer, List<CSVRecord>> groupBy(List<CSVRecord> dataRows, String colName) {
+        return dataRows.stream().collect(Collectors.groupingBy(row -> Integer.parseInt(row.get(colName))));
+    }
+
+    /**
+     * Groups the data rows by TRACK_ID
      * @param dataRows List of CSV records
      * @return Map where key is TRACK_ID and value is list of records with that TRACK_ID
      */
     public static Map<Integer, List<CSVRecord>> groupByTrackId(List<CSVRecord> dataRows) {
-        return dataRows.stream().collect(Collectors.groupingBy(row -> Integer.parseInt(row.get("TRACK_ID"))));
+        return groupBy(dataRows, "TRACK_ID");
+    }
+
+    /**
+     * Gets the data in a list of CSVRecords corresponding to a selected column name
+     * @param rows List of CSV records
+     * @param colName Name of column in header
+     * @return The values of the column
+     */
+    public static List<Double> getColumn(List<CSVRecord> rows, String colName) {
+        return rows.stream().map(row -> Double.parseDouble(row.get(colName))).collect(Collectors.toList());
     }
 
         /**
@@ -189,7 +209,7 @@ public class Plots{
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
 
         // Prepare x-axis
-        List<Double> xData = rows.stream().map(row -> Double.parseDouble(row.get(xFeature))).collect(Collectors.toList());
+        List<Double> xData = getColumn(rows, xFeature);
         XYChart chart = new XYChartBuilder().width(width).height(height).title(
                 "Track ID: " + trackId + " (" + xFeature + " as independent variable)"
                 ).xAxisTitle(xFeature).yAxisTitle("others").build();
@@ -197,7 +217,7 @@ public class Plots{
         // Add features one by one
         for (String yFeature : yFeatures) {
             // Get y-feature
-            List<Double> yData = rows.stream().map(row -> Double.parseDouble(row.get(yFeature))).collect(Collectors.toList());
+            List<Double> yData = getColumn(rows, yFeature);
 
             // Add series to plot
             XYSeries series = chart.addSeries(yFeature, xData, yData);
@@ -214,6 +234,49 @@ public class Plots{
     }
 
     /**
+     * Compute particle speed from provided time and position data
+     * @param tData List of times when measurements were performed
+     * @param dimData Lists of coordinates. Each list should hold the data for its own dimension
+     * @return List of speed data computed using finite differences
+     */
+    @SafeVarargs  // Not a good idea, but otherwise can't have an array of List<Double> in dimData
+    public static List<Double> getSpeed(List<Double> tData, List<Double>... dimData) {
+        List<Double> speeds = new ArrayList<Double>();
+
+        // For each point in time, get the displacement
+        for (int i = 1; i < tData.size(); i++) {
+            Double rSquared = 0.0;
+            for (List<Double> data : dimData) {
+                rSquared += Math.pow(data.get(i) - data.get(i-1), 2.0);
+            }
+            // Divide displacement by timestep
+            speeds.add(Math.sqrt(rSquared)/(tData.get(i) - tData.get(i-1)));
+        }
+
+        return speeds;
+    }
+
+    /**
+     * Compute particle speed from provided dataframe and selected columns
+     * @param rows Dataframe containing CSVRecord rows with the position of a point at a given time
+     * @param tName Name of the time variable in the header of the CSVRecords
+     * @param dimNames Names of the position variables
+     * @return List of speed data computed from the given columns, using finite differences
+     */
+    @SuppressWarnings("unchecked")  // Not a good idea, but otherwise can't create List<Double>[] for generic getSpeed.
+    public static List<Double> getSpeed(List<CSVRecord> rows, String tName, String... dimNames) {
+        // Get the corresponding columns
+        List<Double> tData = getColumn(rows, tName);
+        List<Double>[] dimData = new ArrayList[dimNames.length];
+        for (int i = 0; i < dimNames.length; i++) {
+            dimData[i] = getColumn(rows, dimNames[i]);
+        }
+
+        // Feed the data into generic getSpeed
+        return getSpeed(tData, dimData);
+    }
+
+    /**
      * Plot "instantaneous" speed over time for a given collection of tracks.
      * @param trackIds List of IDs of the tracks to plot
      * @param rows List of CSV records containing the data (sorted by frame)
@@ -222,9 +285,6 @@ public class Plots{
      * @return JPanel containing the chart
      */
     public static JPanel plotSpeed(List<Integer> trackIds, List<CSVRecord> rows, int width, int height) {
-        // Time between each frame
-        double dt = 1;
-
         // Sort by frame
         rows.sort(Comparator.comparingInt(row -> Integer.parseInt(row.get("FRAME"))));
         // Separate rows per track
@@ -239,18 +299,8 @@ public class Plots{
             List<CSVRecord> trackData = groupedRows.get(trackId);
 
             // Get data
-            List<Double> xData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_X"))).collect(Collectors.toList());
-            List<Double> yData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_Y"))).collect(Collectors.toList());
-            List<Double> zData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_Z"))).collect(Collectors.toList());
-            List<Double> tData = trackData.stream().map(row -> Double.parseDouble(row.get("POSITION_T"))).collect(Collectors.toList());
-
-            List<Double> trackSpeed = new ArrayList<>();
-            for (int i = 1; i < xData.size(); i++) {
-                Double rSquared = Math.pow(xData.get(i) - xData.get(i-1), 2.0) +
-                                  Math.pow(yData.get(i) - yData.get(i-1), 2.0) +
-                                  Math.pow(zData.get(i) - zData.get(i-1), 2.0);
-                trackSpeed.add(Math.pow(rSquared, 0.5)/dt);
-            }
+            List<Double> tData = getColumn(trackData, "POSITION_T");
+            List<Double> trackSpeed = getSpeed(trackData, "POSITION_T", "POSITION_X", "POSITION_Y", "POSITION_Z");
             tData.remove(0);  // to get array of the same size
 
             // Add series to the chart
@@ -362,9 +412,9 @@ public class Plots{
      * @param width Width of output figure
      * @param height Height of output figure
      * @param visible Whether or not to display other stuff than the data
-     * @throws IOException If an error occurs while saving the file
+     * @return JPanel containing the chart
      */
-    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height, boolean visible) throws IOException {
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height, boolean visible) {
         // Extract data for the histogram
         List<Double> columnData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnName))).collect(Collectors.toList());
 
@@ -386,13 +436,13 @@ public class Plots{
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
     }
-    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height) throws IOException {
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, int width, int height) {
         return plotHistogram(dataRows, columnName, nBins, width, height, true);
     }
-    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, boolean visible) throws IOException {
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins, boolean visible) {
         return plotHistogram(dataRows, columnName, nBins, 1600, 1000, visible);
     }
-    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins) throws IOException {
+    public static JPanel plotHistogram(List<CSVRecord> dataRows, String columnName, int nBins) {
         return plotHistogram(dataRows, columnName, nBins, 1600, 1000, true);
     }
 
@@ -406,9 +456,9 @@ public class Plots{
      * @param width Width of output figure
      * @param height Height of output figure
      * @param visible Whether or not to display other stuff than the data
-     * @throws IOException If an error occurs while saving the file
+     * @return JPanel containing the chart
      */
-    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height, boolean visible) throws IOException {
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height, boolean visible) {
         // Extract data for the heatmap
         List<Double> xData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnX))).collect(Collectors.toList());
         List<Double> yData = dataRows.stream().map(row -> Double.parseDouble(row.get(columnY))).collect(Collectors.toList());
@@ -465,13 +515,13 @@ public class Plots{
         // Put chart on a panel for easier manipulation
         return new XChartPanel<>(chart);
     }
-    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height) throws IOException {
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, int width, int height) {
         return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, width, height, true);
     }
-    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, boolean visible) throws IOException {
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY, boolean visible) {
         return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, 1600, 1000, visible);
     }
-    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY) throws IOException {
+    public static JPanel plotHeatmap(List<CSVRecord> dataRows, String columnX, String columnY, int nBinsX, int nBinsY) {
         return plotHeatmap(dataRows, columnX, columnY, nBinsX, nBinsY, 1600, 1000, true);
     }
 
@@ -481,8 +531,9 @@ public class Plots{
      * @param columns List of columns to be used in the jointplot
      * @param panelSize Size of each individual square panel
      * @param render Which side of the diagonal gets heatmaps
+     * @return JPanel containing the chart
      */
-    public static JPanel jointPanelPlot(List<CSVRecord> dataRows, List<String> columns, int panelSize, int render) throws IOException {
+    public static JPanel plotJointPanel(List<CSVRecord> dataRows, List<String> columns, int panelSize, int render) {
         // Prepare the panel on which we draw the jointplot
         JPanel chartPanel = new JPanel(new GridLayout(columns.size(), columns.size()));
         boolean show;
@@ -511,7 +562,31 @@ public class Plots{
 
         return chartPanel;
     }
-    public static JPanel jointPanelPlot(List<CSVRecord> dataRows, List<String> columns) throws IOException {
-        return jointPanelPlot(dataRows, columns, 250, -1);
+    public static JPanel plotJointPanel(List<CSVRecord> dataRows, List<String> columns) {
+        return plotJointPanel(dataRows, columns, 250, -1);
+    }
+
+    /**
+     * Plot a boxplot to compare a given feature between bacteria colonies
+     * @param dataRows Dataframe containing track data
+     * @param feature Feature to plot and compare
+     * @param width Width of output plot
+     * @param height Height of output plot
+     * @return JPanel containing the chart
+     */
+    public static JPanel plotColonyStats(List<CSVRecord> dataRows, String feature, int width, int height) {
+        SortedMap<Integer, List<CSVRecord>> colonyData = new TreeMap<Integer, List<CSVRecord>>(groupBy(dataRows, "COLONY_LABEL"));
+
+        BoxChart chart = new BoxChartBuilder().width(width).height(height).build();
+
+        for (Integer colonyID : colonyData.keySet()) {
+            List<CSVRecord> data = colonyData.get(colonyID);
+            chart.addSeries(String.valueOf(colonyID) + " (" + data.size() + " tracks)", getColumn(data, feature));
+        }
+
+        return new XChartPanel<>(chart);
+    }
+    public static JPanel plotColonyStats(List<CSVRecord> dataRows, String feature) {
+        return plotColonyStats(dataRows, feature, 1600, 1000);
     }
 }
